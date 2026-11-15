@@ -1,0 +1,141 @@
+{
+  "version": "1.0",
+  "created": "2026-11-14",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 3026,
+      "sha256": "6b926f0d879ef00af0d925631c4d263cf90766dbd9fef3131202491bcb389349"
+    },
+    {
+      "path": "assets/home-desktop-mobile.png",
+      "bytes": 1935957,
+      "sha256": "36a5428058310e6826820e89d90fb4cae76fd8808ff6776a77db6205439aaa79"
+    },
+    {
+      "path": "assets/IMAGE-PROMPT.md",
+      "bytes": 2432,
+      "sha256": "4a14de16de60316ce9fbe69d5a6dc907373f265108eb4cc273288a78fde43f5b"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 770,
+      "sha256": "185e19d6bc20550b43bd220ca2a8fe0108e6fca9329e2ecd29587152870d82c3"
+    },
+    {
+      "path": "CLAUDE.md",
+      "bytes": 1075,
+      "sha256": "e74ae4a6add31390ff779babcc5b535c65cc597f5887f78672fe967c992f13e4"
+    },
+    {
+      "path": "docs/01-BRD.md",
+      "bytes": 6981,
+      "sha256": "179d087b7f477da83ff638282e0b728de54e5b598b89d9762210fcff7462a693"
+    },
+    {
+      "path": "docs/02-PRD.md",
+      "bytes": 8858,
+      "sha256": "ccf5509d44fa56040d2c82081da5ca119de59d858c3a2448c2d67453e7a15673"
+    },
+    {
+      "path": "docs/03-DECISIONS-AND-RISKS.md",
+      "bytes": 6813,
+      "sha256": "04d08e26d589a4dd7630dfda55ab84f7009212d989a5942ffeb4344a1010a744"
+    },
+    {
+      "path": "docs/04-UX-DESIGN.md",
+      "bytes": 6708,
+      "sha256": "5245c97691296eabe830fdbf02b9a87d0dcc28c821882a3fa700b566cdf64a3a"
+    },
+    {
+      "path": "docs/05-ARCHITECTURE.md",
+      "bytes": 6899,
+      "sha256": "0b761e7d3fdd29a2a07aa75154453bb629fb580b033d94d4b87602e9fcc56659"
+    },
+    {
+      "path": "docs/06-DATA-MODEL.md",
+      "bytes": 8751,
+      "sha256": "34e0154659da4f25fb5ca15827f85f0211684daf95a9d7045e4a0c329b32075f"
+    },
+    {
+      "path": "docs/07-API-CONTRACTS.md",
+      "bytes": 7987,
+      "sha256": "9e363326b46d270bb7c665d08d904e82ed990bd3122acd254d72ce2b89cb8237"
+    },
+    {
+      "path": "docs/08-WORKFLOWS.md",
+      "bytes": 5454,
+      "sha256": "71c2c013a645dfa2044a1e144a7ec4ccf35729b3eb6032e8180b4cbe4fced7f1"
+    },
+    {
+      "path": "docs/09-SECURITY-AND-ACCESS.md",
+      "bytes": 5560,
+      "sha256": "61f07de918b403487dca341bed1901f6f95f0a4694d8d2b17e963e1a79284d98"
+    },
+    {
+      "path": "docs/10-FINANCE.md",
+      "bytes": 5289,
+      "sha256": "635dd09b70a6c08e6b87e60f0fd1fe6526452d0cbcdfedcc2dad59ad1efb2379"
+    },
+    {
+      "path": "docs/11-CARE-AND-COUNSELING.md",
+      "bytes": 6411,
+      "sha256": "606766ca9f139e2071387ee5f7ea27a432f86a57c016ba5a388bd42146dcabdb"
+    },
+    {
+      "path": "docs/12-QA-ACCEPTANCE.md",
+      "bytes": 5655,
+      "sha256": "b005278e746989b5bb30284921e9fcdcf9bfbbd6072dd62a72ac85afa0764a9e"
+    },
+    {
+      "path": "docs/13-DEVOPS.md",
+      "bytes": 4056,
+      "sha256": "bbcc57c6c246158d0e8cd02f9672203e641b09908e9473fa57ad97f4e7f1504f"
+    },
+    {
+      "path": "docs/14-ESTIMATE.md",
+      "bytes": 5036,
+      "sha256": "d5051456afc08fcf55c4fbd30f4871e9430bdc1953b368e8fec689224ebd892b"
+    },
+    {
+      "path": "docs/15-AI-COLLABORATION.md",
+      "bytes": 3304,
+      "sha256": "aebde600b981d2616705436f862a05f1861e5b649596ec87b29da506b7da57bf"
+    },
+    {
+      "path": "docs/16-TRACEABILITY.md",
+      "bytes": 3896,
+      "sha256": "c8bbba6f3e8090ec06da1efd179d42effd519b459df247b21a7b645c90b0f677"
+    },
+    {
+      "path": "docs/17-SOURCES.md",
+      "bytes": 2597,
+      "sha256": "14985fa6fe9dd25b7ccf650f5580985de9ee353d05c8f3c3df3a734e9f8b10a9"
+    },
+    {
+      "path": "PACKAGE-CHECK.md",
+      "bytes": 1000,
+      "sha256": "0f8fe95a852912431a4334b8344a86998b221e4deb4c1e7704f4e20677029133"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3985,
+      "sha256": "55f31d5532e5663304bdb8fd82218d6733622a8d705c39461137bd6057f9289a"
+    },
+    {
+      "path": "references/prior-chat.txt",
+      "bytes": 32266,
+      "sha256": "b90b8136a741e6de09a5b504fd9cd9b1cc102eebd841545c43e75d49fce8c490"
+    },
+    {
+      "path": "START-PROMPTS.md",
+      "bytes": 2887,
+      "sha256": "bc0e646ac5f56a3fac3772638f3eb4add3d8188b8b00fb3c2e64c35ec251b932"
+    },
+    {
+      "path": "TASKS.md",
+      "bytes": 14753,
+      "sha256": "966eb7e3e1f17c26e5b2b479651452a1ea3168d282f7763ccc1e1b66d2009f1f"
+    }
+  ]
+}

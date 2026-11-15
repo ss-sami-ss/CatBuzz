@@ -1,0 +1,45 @@
+# همکاری Codex و Claude
+
+## نقش‌ها
+
+تقسیم زیر پیشنهاد کاری است. کارفرما می‌تواند جابه‌جا کند. این بسته Claude را متصل یا مأمور به کار نکرده است؛ هر عامل باید در محیط خودش به همان مخزن و نسخهٔ اسناد دسترسی داشته باشد.
+
+- Codex هماهنگ‌کنندهٔ فنی و مالک قراردادها، داده، API، امنیت، worker و integration.
+- Claude مالک پیشنهادی UI، کامپوننت‌ها، RTL، جریان‌های فرم و visual QA.
+- بازبین هر تغییر تا حد امکان عامل دیگر است؛ مسئول انسانی تصمیم‌های محصول و انتشار را تأیید می‌کند.
+
+## تقسیم بر اساس مرز
+
+برای هر تسک یک owner و مجموعهٔ فایل مشخص ثبت شود. UI روی fixture مبتنی بر قرارداد کار کند. API پیش از اتصال UI نمونهٔ موفق/خطا و policy می‌دهد. تغییر schema، shared contracts، lockfile و routeهای مشترک توسط یک owner در هر لحظه انجام شود.
+
+branch/worktree پیشنهادی `codex/Txx-short-name` و `claude/Txx-short-name`. هیچ عامل روی worktree فعال دیگری reset، clean یا overwrite انجام ندهد. یک integration branch و PR کوچک برای هر تسک/گروه مرتبط داشته باشیم. merge فقط پس از بررسی diff، قرارداد و تست‌های لازم.
+
+## قرارداد تحویل هر تسک
+
+```text
+Task ID:
+Owner / reviewer:
+Base commit:
+Files owned / files changed:
+Requirement IDs:
+Implementation summary:
+Tests and actual results:
+Migration / env changes:
+Known gaps:
+Next task / handoff:
+```
+
+## قوانین ادامهٔ کار
+
+- قبل شروع، README، AGENTS، PRD، تصمیم‌ها و ردیف تسک خوانده شود.
+- وضعیت `todo / in_progress / review / blocked / done`، owner و زمان در TASKS ثبت شود.
+- blocked باید علت واقعی، پیش‌نیاز و کار مستقل قابل ادامه داشته باشد.
+- ادعای تست، deploy، تماس با provider یا review بدون اجرا ثبت نشود.
+- تصویر مفهومی مجوز حذف یا افزودن requirement نیست.
+- تغییر دامنه در CHANGELOG و DECISIONS با منبع تصمیم ثبت شود.
+- یک عامل کار عامل دیگر را صرفاً برای سبک شخصی بازنویسی نکند.
+- در پایان جلسه، فایل `work/HANDOFF.md` با commit، وضعیت، دستورات اجراشده و قدم بعدی به‌روز شود؛ secret در آن نباشد.
+
+## ترتیب همکاری
+
+ابتدا T01–T06 برای قرارداد و زیرساخت. سپس Codex روی داده/API و Claude روی کامپوننت/صفحهٔ متناظر کار کند. T32 و T62 دروازهٔ integration هستند. taskهای موازی فقط وقتی وابستگی آماده و محدودهٔ فایل جدا است تقسیم شوند. آغاز task وابسته بر اساس mock باید صریح باشد و پایان آن تا تست integration ثبت نشود.
