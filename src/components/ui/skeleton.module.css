@@ -1,0 +1,29 @@
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background-color: var(--color-surface-muted);
+}
+
+/* Shimmer moves with the reading direction using transform only (docs/18 §7). */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 55%), transparent);
+  transform: translateX(calc(-100% * var(--dir)));
+  animation: skeleton-shimmer var(--duration-shimmer) linear infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(calc(100% * var(--dir)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+    opacity: 0;
+  }
+}

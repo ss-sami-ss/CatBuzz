@@ -55,6 +55,7 @@
 | `--duration-toast` | 400ms | toast (با `ease`، طبق الگوی Sonner) |
 | `--duration-pulse` | 1400ms × 3 بار | پالس حالت فوری |
 | `--duration-celebrate` | 700ms | جشن موفقیت |
+| `--duration-shimmer` | 1400ms، با `linear` | یک دور shimmer در skeleton؛ تا رسیدن داده تکرار می‌شود |
 | `--stagger-delays` | 0، 35، 65، 90، 110، 125ms | تأخیر کارت‌های 1 تا 6 (فاصلهٔ کاهشی) |
 | `--skeleton-delay` / `--skeleton-min` | 200 / 400ms | دیرتر نمایش دادن skeleton و حداقل مدت نمایش آن |
 

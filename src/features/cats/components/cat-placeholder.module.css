@@ -1,0 +1,47 @@
+.frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.cat {
+  width: 70%;
+  max-width: 96px;
+}
+
+.eye {
+  fill: var(--color-surface);
+}
+
+.tag {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline-start: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-sample-soft);
+  color: var(--color-sample);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.amber {
+  background-color: #f3dcc0;
+  color: #c47a2c;
+}
+
+.snow {
+  background-color: #e9ecef;
+  color: #b9c0c4;
+}
+
+.smoke {
+  background-color: #dfe3df;
+  color: #5c6660;
+}
+
+.tabby {
+  background-color: #eae1d3;
+  color: #8a6b45;
+}

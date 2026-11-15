@@ -48,3 +48,13 @@ README.md و docs/02-PRD.md مرجع دامنه‌اند. docs/03-DECISIONS-AND-
 ## تعریف done
 
 رفتار از مسیر عادی کاربر کار کند، permission و حالت خطا پوشش داده شود، تست متناسب پاس شود، docs/قرارداد تغییرکرده به‌روز شود، محدودیت‌ها ثبت و review انجام شود. deployment و اجرای انسانی تنها در صورت وقوع واقعی گزارش شوند.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

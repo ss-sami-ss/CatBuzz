@@ -1,0 +1,223 @@
+/* Sheet + dialog motion: docs/18 §3. Only transform and opacity transition. */
+
+/* ---------- Mobile sheet (Base UI Drawer) ---------- */
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  min-height: 100dvh;
+  background-color: rgb(24 35 29 / 100%);
+  /* No dimming at the peek snap point so the map stays usable; dims only when expanded. */
+  opacity: 0;
+  transition: opacity var(--duration-drawer-in) var(--ease-drawer);
+}
+
+.sheetBackdrop[data-expanded] {
+  opacity: calc(0.32 * (1 - var(--drawer-swipe-progress, 0)));
+}
+
+.sheetBackdrop[data-swiping] {
+  transition-duration: 0ms;
+}
+
+.sheetViewport {
+  --bleed: 3rem;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.sheet {
+  --top-margin: 1rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: calc(100dvh - var(--top-margin));
+  padding-bottom: max(0px, calc(var(--drawer-snap-point-offset) + var(--drawer-swipe-movement-y)));
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-start-start-radius: var(--radius-xl);
+  border-start-end-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sheet);
+  outline: 0;
+  pointer-events: auto;
+  touch-action: none;
+  transform: translateY(calc(var(--drawer-snap-point-offset) + var(--drawer-swipe-movement-y)));
+  transition: transform var(--duration-drawer-in) var(--ease-drawer);
+  will-change: transform;
+}
+
+/* Fill the gap under the sheet when it is dragged up past its edge (rubber-band). */
+.sheet::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  height: var(--bleed);
+  background-color: inherit;
+  pointer-events: none;
+}
+
+.sheet[data-starting-style],
+.sheet[data-ending-style] {
+  transform: translateY(calc(100% + 2px));
+  padding-bottom: 0;
+}
+
+/* Exit is faster than entry; a flick shortens it further via swipe strength. */
+.sheet[data-ending-style] {
+  transition-duration: calc(var(--drawer-swipe-strength, 1) * var(--duration-drawer-out));
+}
+
+.sheet[data-swiping] {
+  transition-duration: 0ms;
+}
+
+.dragArea {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-5) var(--space-2);
+  touch-action: none;
+  user-select: none;
+}
+
+.handle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto var(--space-3);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-border-strong);
+}
+
+.sheetBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: auto;
+  padding: 0 var(--space-5) calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- Desktop dialog (Base UI Dialog) ---------- */
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgb(24 35 29 / 32%);
+  transition: opacity var(--duration-modal-in) var(--ease-out);
+}
+
+.dialogBackdrop[data-starting-style],
+.dialogBackdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.dialogBackdrop[data-ending-style] {
+  transition-duration: var(--duration-modal-out);
+}
+
+.dialogViewport {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+}
+
+.dialog {
+  width: min(480px, 100%);
+  max-height: calc(100dvh - 2 * var(--space-5));
+  overflow-y: auto;
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sheet);
+  outline: 0;
+  /* Modals stay centered: not anchored to a trigger. */
+  transform-origin: center;
+  transition:
+    opacity var(--duration-modal-in) var(--ease-out),
+    transform var(--duration-modal-in) var(--ease-out);
+}
+
+.dialog[data-starting-style],
+.dialog[data-ending-style] {
+  opacity: 0;
+  transform: scale(var(--enter-scale));
+}
+
+.dialog[data-ending-style] {
+  transition-duration: var(--duration-modal-out);
+}
+
+.dialogBody {
+  margin-top: var(--space-4);
+}
+
+/* ---------- Shared header ---------- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
+.description {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.close {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--target-min);
+  height: var(--target-min);
+  margin-inline-end: calc(-1 * var(--space-2));
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: transform var(--duration-press) var(--ease-out);
+}
+
+.close:active {
+  transform: scale(var(--press-scale));
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .close:hover {
+    background-color: var(--color-surface-muted);
+    color: var(--color-text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sheet: fade instead of sliding in; finger tracking itself is unchanged. */
+  .sheet {
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .sheet[data-starting-style],
+  .sheet[data-ending-style] {
+    transform: translateY(calc(var(--drawer-snap-point-offset) + var(--drawer-swipe-movement-y)));
+    opacity: 0;
+  }
+}

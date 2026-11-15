@@ -1,0 +1,14 @@
+/* CSS animation runs on the compositor and never blocks interaction (docs/18 §4). */
+.item {
+  animation: motion-enter var(--duration-item) var(--ease-out) both;
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Collapse the choreography: no delays, opacity only. */
+  .item {
+    animation-name: motion-fade-in;
+    animation-duration: var(--duration-fast);
+    animation-delay: 0ms;
+  }
+}

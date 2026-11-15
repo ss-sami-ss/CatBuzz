@@ -1,0 +1,58 @@
+/* Motion tokens — source of truth: docs/18-MOTION-DESIGN.md. Mirrored in tokens.ts (parity test). */
+:root {
+  --dir: 1;
+
+  --duration-instant: 0ms;
+  --duration-press: 140ms;
+  --duration-fast: 160ms;
+  --duration-base: 220ms;
+  --duration-item: 200ms;
+  --duration-modal-in: 250ms;
+  --duration-modal-out: 200ms;
+  --duration-shared: 300ms;
+  --duration-progress: 400ms;
+  --duration-drawer-in: 450ms;
+  --duration-drawer-out: 300ms;
+  --duration-toast: 400ms;
+  --duration-pulse: 1400ms;
+  --duration-celebrate: 700ms;
+  --duration-shimmer: 1400ms;
+  --skeleton-delay: 200ms;
+  --skeleton-min: 400ms;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --press-scale: 0.97;
+  --enter-scale: 0.96;
+  --enter-distance-lead: 10px;
+  --enter-distance: 6px;
+}
+
+[dir="rtl"] {
+  --dir: -1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    /* Keep opacity fades, drop spatial movement (docs/18 rule 8). */
+    --press-scale: 1;
+    --enter-scale: 1;
+    --enter-distance-lead: 0px;
+    --enter-distance: 0px;
+  }
+}
+
+@keyframes motion-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--enter-from, var(--enter-distance)));
+  }
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+}

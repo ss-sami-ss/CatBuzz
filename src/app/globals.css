@@ -1,4 +1,6 @@
 @import "@fontsource-variable/vazirmatn/wght.css";
+@import "../components/ui/design-tokens.css";
+@import "../components/motion/tokens.css";
 
 *,
 *::before,
@@ -12,6 +14,15 @@ html {
 
 body {
   margin: 0;
-  font-family: "Vazirmatn Variable", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
   line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
 }
