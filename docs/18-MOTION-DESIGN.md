@@ -245,7 +245,7 @@ bounce فقط وقتی هست که انگشت «نیرو» داده است. هم
 | نیاز | انتخاب | دلیل |
 |---|---|---|
 | press، hover، stagger، skeleton، پالس، نوار پیشرفت، ورود با `@starting-style` | **CSS** | روی compositor اجرا می‌شود و هنگام بارگذاری صفحه frame نمی‌اندازد؛ صفر bundle |
-| جابه‌جایی صفحه و shared element | **React `<ViewTransition>`** | در React 19.3.1 پایدار است (export `ViewTransition` و `addTransitionType` بررسی شد)؛ از View Transitions مرورگر استفاده می‌کند، پس سبک و روی compositor است. در Next.js 16.4.6 هنوز پشت `experimental.viewTransition` است (در کد پکیج بررسی شد)، پس داخل یک wrapper قرار می‌گیرد و با خاموش کردن flag، ناوبری بدون انیمیشن کار می‌کند |
+| جابه‌جایی صفحه و shared element | **React `<ViewTransition>`** | در React 19.3.1 پایدار است (export `ViewTransition` و `addTransitionType` بررسی شد)؛ از View Transitions مرورگر استفاده می‌کند، پس سبک و روی compositor است. در Next.js 16.4.6 بخشی از runtime پایدار است و flag لازم ندارد (در T02 روی پکیج نصب‌شده بررسی شد؛ ادعای قبلی دربارهٔ flag آزمایشی اشتباه بود). باز هم داخل یک wrapper قرار می‌گیرد تا در مرورگر بدون پشتیبانی، ناوبری بدون انیمیشن کار کند |
 | sheet و Drawer کشیدنی با snap point، Dialog، Tooltip و سایر primitiveها | **Base UI** (`@base-ui/react`) | انتخاب primitive در `pick-ui-library`. نسخهٔ 1.9.0 کامپوننت Drawer با `snapPoints`، `swipeDirection` و `swipeProgress` دارد و focus، Escape و inert را مدیریت می‌کند. Vaul (انتخاب قبلی همان فهرست برای drawer) آخرین انتشارش 2024-12 است، پس Base UI ترجیح دارد |
 | spring با سرعت انگشت، exit، جشن | **Motion** (`motion`) | انتخاب `pick-ui-library` برای spring و gesture. نسخهٔ 14.14.0 شتاب سخت‌افزاری `x/y/scale` را دارد (≥14.2). فقط در کامپوننت‌هایی که لازمش دارند و با `next/dynamic` بارگذاری می‌شود |
 | toast | **Sonner** | انتخاب `pick-ui-library`؛ نسخهٔ 2.0.8 |
@@ -263,9 +263,9 @@ bounce فقط وقتی هست که انگشت «نیرو» داده است. هم
 | motion | 14.14.0 | latest |
 | @base-ui/react | 1.9.0 | latest |
 | sonner | 2.0.8 | 2026-08 |
-| typescript | 7.0.2 (پشتیبان: 6.0.3) | 2026-07-08 |
+| typescript | 6.0.3 (7.0.2 با typescript-eslint داخل eslint-config-next ناسازگار بود) | 2026-04-16 |
 
-TypeScript 7 نسخهٔ native است. اگر typecheck یا build در Next 16.4.6 با آن مشکل داشت، 6.0.3 قفل می‌شود. نتیجه در گزارش T02 ثبت می‌شود.
+نتیجهٔ T02: TypeScript 7.0.2 با typescript-eslint داخل eslint-config-next (پشتیبانی تا <6.1) ناسازگار بود و 6.0.3 قفل شد. ESLint 9.39.5 قفل شد، چون پلاگین‌های import، jsx-a11y و react در eslint-config-next 16.4.6 هنوز ESLint 10 را نمی‌پذیرند (npm این نسخه را «پشتیبانی‌نشده» علامت زده است). با نسخهٔ بعدی eslint-config-next بازبینی می‌شود.
 
 ## ساختار `src/components/motion`
 
@@ -278,7 +278,7 @@ src/components/motion/
   use-reduced-motion.ts    سازگار با SSR؛ پیش‌فرض امن تا hydration
   use-delayed-visibility.ts  منطق skeleton-delay / skeleton-min (تابع خالص و تست‌پذیر)
   stagger.tsx              Stagger / StaggerItem مبتنی بر CSS؛ سقف 6
-  page-transition.tsx      wrapper روی ViewTransition؛ جهت با addTransitionType؛ flag
+  page-transition.tsx      wrapper روی ViewTransition؛ جهت با addTransitionType
   shared-element.tsx       catTransitionName و wrapper نام‌دار
   sheet.tsx                Base UI Drawer با snap point و توکن‌ها
   dialog.tsx               Base UI Dialog؛ زیر 768px به sheet تبدیل می‌شود

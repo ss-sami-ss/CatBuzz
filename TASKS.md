@@ -13,7 +13,7 @@
 | ID | مرحله | مالک | وابستگی | عنوان | معیار پذیرش قابل بررسی | نیازها | وضعیت |
 |---|---|---|---|---|---|---|---|
 | T01 | P1 | Claude | — | تثبیت دامنه و تصمیم‌ها | D01–D16 مرور و owner/موعد ثبت؛ P1/P2 و فرض ویزیت متنی به کارفرما ارائه شود | R01, R14, R18 | done (2026-11-15؛ D01–D26 با مالک و موعد در DECISIONS؛ گزارش مرحلهٔ ۴ تأیید شد) |
-| T02 | P1 | Claude | T01 | راه‌اندازی Next.js و ابزارها | نسخه‌های سازگار lock، TypeScript strict، lint و production build موفق | R22 | todo |
+| T02 | P1 | Claude | T01 | راه‌اندازی Next.js و ابزارها | نسخه‌های سازگار lock، TypeScript strict، lint و production build موفق | R22 | done (2026-11-15؛ نسخه‌های دقیق در package.json/lockfile، strict، typecheck/lint/build پاس) |
 | T03 | P1 | Claude | T02 | زیرساخت local و staging | DB/PostGIS، storage/queue آزمایشی و env.example بدون secret قابل راه‌اندازی | R22 | todo |
 | T04 | P1 | Claude | T02 | سیستم طراحی و پوسته RTL | کامپوننت‌های پایه، focus و layout عرض 360/768/1440 با تصویر مرجع تطبیق یابد | R04 | todo |
 | T05 | P1 | Claude | T03 | schema و migration پایه | مدل P1 و قیود یکتا/روابط روی DB خالی و seed ساختگی کار کند | R05, R06, R22 | todo |

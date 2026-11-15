@@ -30,7 +30,7 @@
 | D22 | دیتابیس | قطعی کارفرما (2026-11-15) | کارفرما | PostgreSQL + PostGIS؛ migration با Drizzle و SQL صریح برای GIS (T03/T05) |
 | D23 | روش استایل | قطعی کارفرما (2026-11-15) | کارفرما | CSS Modules و CSS custom properties؛ بدون Tailwind؛ logical properties برای RTL |
 | D24 | صف کار و realtime | قطعی کارفرما (2026-11-15) | کارفرما | Redis و BullMQ برای job؛ WebSocket مستقل از Next (T03/T26/T22) |
-| D25 | نسخه‌ها و کتابخانه‌های UI | قطعی کارفرما (2026-11-15) | Claude (فنی) | Next 16.4.6، React 19.3.1، TypeScript 7.0.2 (پشتیبان 6.0.3)، Base UI، Motion، Sonner؛ View Transition پشت flag قابل خاموش شدن؛ نسخهٔ دقیق در lockfile (T02) |
+| D25 | نسخه‌ها و کتابخانه‌های UI | قطعی کارفرما (2026-11-15) | Claude (فنی) | Next 16.4.6، React 19.3.1، TypeScript 6.0.3 (7.0.2 با lint ناسازگار بود)، ESLint 9.39.5، Vitest 5.1.0، Base UI، Motion، Sonner؛ ViewTransition در Next 16.4.6 پایدار است؛ نسخهٔ دقیق در lockfile (T02 انجام شد) |
 | D26 | Dialog | قطعی کارفرما (2026-11-15) | کارفرما | دسکتاپ: مرکزی و غیرکشیدنی؛ موبایل: bottom sheet کشیدنی با spring |
 
 ## نقص‌های تبدیل‌شده به طراحی

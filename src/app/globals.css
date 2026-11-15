@@ -1,0 +1,17 @@
+@import "@fontsource-variable/vazirmatn/wght.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Vazirmatn Variable", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  line-height: 1.6;
+}
