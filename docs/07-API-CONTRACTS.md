@@ -64,6 +64,21 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET/POST /adoption-listings | نوع دائم/موقت و cat |
 | POST /adoption-listings/{id}/applications | اطلاعات خصوصی متقاضی |
 | POST /ownership-claims | مدرک خصوصی، عدم انتشار تماس مدعی |
+| GET/PUT /me/caregiver-profile | پروفایل نگهدارندهٔ خود؛ فیلدهای خصوصی فقط خود فرد |
+| POST /me/caregiver-profile/submit | ارسال برای بررسی؛ draft → pending_review |
+| PUT /me/caregiver-profile/availability | بازه‌ها، الگوی هفتگی و timezone |
+| GET /caregivers | area یا bbox، from/to، kind، mode، postOp، pricing؛ فقط PublicCaregiverSummary از پروفایل approved؛ بدون فاصلهٔ دقیق |
+| GET /caregivers/{id} | پروفایل عمومی و خلاصهٔ نظرهای منتشرشده |
+| POST /placement-requests | catIds، caregiverId، kind، mode، from/to؛ Idempotency-Key؛ owned فقط صاحب، foster فقط نقش پرونده |
+| POST /placement-requests/{id}/decision | فقط نگهدارنده؛ accept/decline، version و Idempotency-Key؛ تراکنش ظرفیت؛ 409 `CAREGIVER_CAPACITY_FULL` یا `CAT_ALREADY_PLACED` |
+| POST /placement-requests/{id}/cancel | هر طرف پیش از تحویل، با reason؛ ابطال grant |
+| GET /placements/{id} | فقط دو طرف، مسئول پرونده و ناظر دارای scope |
+| GET /placements/{id}/contact | پس از accepted و تا پایان grant؛ نشانی و تلفن مجاز؛ no-store و audit |
+| POST /placements/{id}/handover | تأیید نقش خود، یادداشت و mediaIds اختیاری؛ دو تأیید → in_care |
+| GET/POST /placements/{id}/reports | ثبت فقط نگهدارنده در in_care؛ خواندن طرفین و مسئول پرونده |
+| POST /placements/{id}/end | outcome (returned/adopted/transferred/terminated_early)، version؛ adopted با claim باز 409 |
+| POST /placements/{id}/reviews | فقط طرفین پس از ended، یک بار تا 14 روز؛ انتشار کور |
+| POST /admin/caregiver-profiles/{id}/decisions | ناظر دارای scope؛ approve/reject/suspend، reason و audit |
 | GET/POST /schedules | recurrence، timezone، localTime و target |
 | PATCH /occurrences/{id} | status، assignee و version؛ مستقل از کل سری |
 | GET /notifications | کاربر جاری، cursor؛ mark-read مستقل از delivery |
@@ -94,6 +109,25 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 
 ## رخدادهای دامنه
 
-`cat.created`، `sighting.recorded`، `help_request.escalated`، `mission.accepted`، `mission.completed`، `payment.succeeded`، `refund.completed`، `expense.reviewed`، `occurrence.due`، `consent.revoked` و `message.created`.
+`cat.created`، `sighting.recorded`، `help_request.escalated`، `mission.accepted`، `mission.completed`، `payment.succeeded`، `refund.completed`، `expense.reviewed`، `occurrence.due`، `consent.revoked`، `message.created`، `caregiver_profile.decided`، `placement.requested`، `placement.accepted`، `placement.handed_over`، `placement.report_missing` و `placement.ended`. نشانی و تلفن در payload رخدادهای placement نیست.
+
+## نمونهٔ DTO عمومی نگهدارنده
+
+```json
+{
+  "id":"caregiver-uuid",
+  "username":"sample_caregiver",
+  "publicArea":{"cellId":"public-cell","label":"محلهٔ نمونه","approximate":true},
+  "serviceKinds":["foster","sitting"],
+  "modes":["host_home"],
+  "capacity":2,
+  "pricing":{"type":"free"},
+  "home":{"otherPets":false,"children":false,"postOpCare":true,"medication":["oral"]},
+  "verification":{"type":"profile_reviewed","at":"2026-11-10T00:00:00Z"},
+  "reviews":{"count":0,"average":null}
+}
+```
+
+مقادیر نمونه‌اند. address، phone، realName، private geography و فاصلهٔ دقیق در این DTO وجود ندارند. میانگین امتیاز تا رسیدن به حداقل تعداد نظر (پیشنهاد 3) null است.
 
 هر رخداد eventId، version، occurredAt، aggregateId و payload حداقلی دارد. اطلاعات تماس و شرح مشاوره در event عمومی قرار نگیرد. outbox در transaction اصلی نوشته می‌شود. webhook امضاشده ابتدا ثبت پایدار و سپس پردازش idempotent می‌شود.

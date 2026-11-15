@@ -11,7 +11,7 @@
 | professional_credentials | user_id، profession، evidence_private، verified_by، verified_at، expires_at، status |
 | volunteer_capabilities | user_id، capability، availability، area، capacity؛ unique(user_id, capability) |
 | groups / memberships | نام، scope، visibility؛ user/group، role، status، joined_at و left_at |
-| cats | نام فعلی، sex/age_estimate با unknown، رنگ/نشانه، lifecycle، canonical_cat_id اختیاری، version |
+| cats | نام فعلی، sex/age_estimate با unknown، رنگ/نشانه، lifecycle، custody (street/owned)، owner_user_id برای owned، canonical_cat_id اختیاری، version؛ owned هرگز در نقشه یا فهرست عمومی نیست |
 | cat_names / name_polls / votes | تاریخچهٔ نام، پیشنهادها، close_at؛ unique(poll_id,user_id) |
 | colonies / colony_memberships | نام، مراقبان، محدودهٔ عمومی؛ cat_id، colony_id، from/to و وضعیت تأیید |
 | sightings | cat_id یا گزارش نامشخص، observer، observed_at، precision، private geography، public_cell_id |
@@ -35,7 +35,13 @@
 | posts / comments / reactions | author، optional cat، visibility، moderation؛ unique(user,post,reaction_type) |
 | conversations / participants / messages | group یا private، membership؛ message client_id یکتا در conversation برای dedupe |
 | adoption_listings / applications | cat، permanent/foster، status، applicant، review، decision_reason خصوصی |
-| placements / followups | cat، responsible_user، start/end، handover evidence، check-in و outcome |
+| placements / followups | cat، kind (permanent/foster/sitting)، mode (host_home/home_visit)، منشأ یکی از application_id یا request_id، caregiver و requester، start/end، تأیید تحویل دوطرفه، status، end_outcome، version؛ check-in و outcome |
+| caregiver_profiles | user_id یکتا، service_kinds، modes، public_cell_id، capacity، pricing (free/paid، price_minor، currency، unit)، home_conditions اعتبارسنجی‌شده، status، verified_by/at، version؛ نشانی دقیق در جدول خصوصی |
+| caregiver_availability | profile، بازهٔ تاریخ یا الگوی هفتگی، timezone و روزهای بسته |
+| placement_requests / request_cats | requester، caregiver_profile، kind، mode، بازه، status، respond_by، decline_reason خصوصی، idempotency_key، version؛ گربه‌های درخواست |
+| placement_reports | placement، author، report_date محلی، timezone، یادداشت، checklist، mediaIds؛ unique(placement_id, report_date, author) و اصلاح با amendment |
+| placement_reviews | placement، author، subject_user، rating 1..5، متن، status (pending/published/hidden)؛ unique(placement_id, author) |
+| contact_grants | grantee، resource، scope (address/phone/location)، valid_from/to، revoked_at؛ خواندن audit می‌شود |
 | lost_found_reports / ownership_claims | type، cat/media، last_seen، claimant، private proof، review/status |
 | schedules / occurrences | target، owner، timezone، recurrence، local_time؛ occurrence scheduled_at/status |
 | reminders / notifications / deliveries | occurrence یا event، recipient، channel، dedupe_key، status، attempts |
@@ -56,6 +62,8 @@
 - ظرفیت مأموریت با قفل سطر یا conditional update در transaction کنترل شود؛ شمارش در مرورگر معتبر نیست.
 - unique(schedule_id, scheduled_at) برای occurrence و unique(event, recipient, channel) برای اعلان.
 - رزرو پزشک با exclusion constraint یا قفل معادل روی بازهٔ زمانی؛ تست concurrent لازم است.
+- پذیرش درخواست نگهداری با قفل سطر caregiver_profile؛ مجموع گربه‌های placementهای هم‌پوشان accepted/in_care از capacity بیشتر نشود. exclusion constraint روی (cat_id، بازه) برای placementهای فعال تا یک گربه هم‌زمان در دو نگهداری نباشد.
+- expense.target علاوه بر cat/mission/colony می‌تواند placement باشد. moderation_reports.target شامل caregiver_profile، placement، placement_review و placement_report است.
 - مقدار پول مثبت، currency سازگار، refund مجموعاً حداکثر مبلغ قابل‌بازپرداخت.
 - جلوگیری از رأی بعد از پایان poll در service/transaction و قید یکتای رأی در DB.
 - ادغام cat منابع را به canonical id متصل و redirect نگه می‌دارد؛ هیچ سلامت یا هزینه‌ای بی‌صاحب نشود.

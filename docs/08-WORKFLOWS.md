@@ -40,6 +40,10 @@ delivered فقط به معنای وضعیت گزارش‌شدهٔ کانال ا�
 
 `draft → open → closed → applied/cancelled`. یک رأی جاری در هر poll. تغییر رأی تا پایان مجاز؛ بستن و اعمال نام اتمیک و با نسخه است. تساوی با policy از پیش نمایش‌داده‌شده یا انتخاب مسئول تعیین می‌شود. نام قبلی به تاریخچه می‌رود.
 
+## نگهداری موقت (placement)
+
+پروفایل نگهدارنده `draft → pending_review → approved` با شاخه‌های `rejected/suspended` است. درخواست نگهداری `requested → accepted → in_care → ended → closed` با شاخه‌های `declined/expired/cancelled/disputed` است. accept در یک transaction شامل قفل پروفایل، بررسی ظرفیت هم‌پوشان، exclusion گربه، ساخت placement و contact grant، افزایش version و outbox است. `in_care` فقط با تأیید هر دو طرف است. expiry با job پایدار اجرا می‌شود و پس از accept بی‌اثر است. پایان با claim باز به `adopted` نمی‌رسد. تعلیق پروفایل placement فعال را لغو نمی‌کند و آن را برای ناظر علامت‌گذاری می‌کند. جزئیات در [CARE](11-CARE-AND-COUNSELING.md).
+
 ## ادغام پرونده
 
 گزارش شباهت → بررسی تصاویر/مشاهده‌ها → تأیید ناظر → انتخاب canonical → انتقال روابط با audit → redirect پروندهٔ قدیمی. در تعارض سوابق، داده حذف یا به‌صورت خودکار قطعی نشود. undo باید روابط منتقل‌شده را با event ثبت‌شده قابل بررسی و بازیابی کند.
