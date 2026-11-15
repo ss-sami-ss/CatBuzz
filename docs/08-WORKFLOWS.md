@@ -42,7 +42,7 @@ delivered فقط به معنای وضعیت گزارش‌شدهٔ کانال ا�
 
 ## نگهداری موقت (placement)
 
-پروفایل نگهدارنده `draft → pending_review → approved` با شاخه‌های `rejected/suspended` است. درخواست نگهداری `requested → accepted → in_care → ended → closed` با شاخه‌های `declined/expired/cancelled/disputed` است. accept در یک transaction شامل قفل پروفایل، بررسی ظرفیت هم‌پوشان، exclusion گربه، ساخت placement و contact grant، افزایش version و outbox است. `in_care` فقط با تأیید هر دو طرف است. expiry با job پایدار اجرا می‌شود و پس از accept بی‌اثر است. پایان با claim باز به `adopted` نمی‌رسد. تعلیق پروفایل placement فعال را لغو نمی‌کند و آن را برای ناظر علامت‌گذاری می‌کند. جزئیات در [CARE](11-CARE-AND-COUNSELING.md).
+پروفایل نگهدارنده `draft → pending_review → published` با شاخه‌های `rejected/suspended` است. درخواست نگهداری `requested → accepted → in_care → ended → closed` با شاخه‌های `declined/expired/cancelled/disputed` است. accept در یک transaction شامل قفل پروفایل، بررسی ظرفیت هم‌پوشان، exclusion گربه، ساخت placement و contact grant، افزایش version و outbox است. `in_care` فقط با تأیید هر دو طرف است. expiry با job پایدار اجرا می‌شود و پس از accept بی‌اثر است. پایان با claim باز به `adopted` نمی‌رسد. تعلیق پروفایل placement فعال را لغو نمی‌کند و آن را برای ناظر علامت‌گذاری می‌کند. جزئیات در [CARE](11-CARE-AND-COUNSELING.md).
 
 ## ادغام پرونده
 

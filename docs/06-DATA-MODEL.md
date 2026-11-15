@@ -36,7 +36,7 @@
 | conversations / participants / messages | group یا private، membership؛ message client_id یکتا در conversation برای dedupe |
 | adoption_listings / applications | cat، permanent/foster، status، applicant، review، decision_reason خصوصی |
 | placements / followups | cat، kind (permanent/foster/sitting)، mode (host_home/home_visit)، منشأ یکی از application_id یا request_id، caregiver و requester، start/end، تأیید تحویل دوطرفه، status، end_outcome، version؛ check-in و outcome |
-| caregiver_profiles | user_id یکتا، service_kinds، modes، public_cell_id، capacity، pricing (free/paid، price_minor، currency، unit)، home_conditions اعتبارسنجی‌شده، status، verified_by/at، version؛ نشانی دقیق در جدول خصوصی |
+| caregiver_profiles | user_id یکتا، service_kinds، modes، public_cell_id، capacity، pricing (free/paid، price_minor، currency، unit)، home_conditions اعتبارسنجی‌شده، status (draft/pending_review/published/rejected/suspended)، reviewed_by/at (بررسی محتوا، نه تأیید هویت)، version؛ خلاصهٔ اعتبار از placement_reviews منتشرشده محاسبه می‌شود و ذخیرهٔ دستی ندارد؛ نشانی دقیق در جدول خصوصی |
 | caregiver_availability | profile، بازهٔ تاریخ یا الگوی هفتگی، timezone و روزهای بسته |
 | placement_requests / request_cats | requester، caregiver_profile، kind، mode، بازه، status، respond_by، decline_reason خصوصی، idempotency_key، version؛ گربه‌های درخواست |
 | placement_reports | placement، author، report_date محلی، timezone، یادداشت، checklist، mediaIds؛ unique(placement_id, report_date, author) و اصلاح با amendment |

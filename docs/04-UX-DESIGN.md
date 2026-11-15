@@ -55,7 +55,7 @@
 
 ## قرارداد کامپوننت‌ها
 
-UI پایه شامل Button، Input، Select، Checkbox، Dialog، Drawer، Tabs، Toast و Skeleton است. اجزای محصول شامل CatCard، NeedBadge، MissionCard، ClinicCard، DonationProgress، InvoiceCard، ConsentForm، ScheduleEditor، CaregiverCard، PlacementTimeline و DailyReportCard هستند. CaregiverCard فقط DTO عمومی را نمایش می‌دهد. نوار «پرداخت داخل برنامه فعال نیست» تا تصمیم D19 روی هزینهٔ اعلام‌شده دیده می‌شود.
+UI پایه شامل Button، Input، Select، Checkbox، Dialog، Drawer، Tabs، Toast و Skeleton است. اجزای محصول شامل CatCard، NeedBadge، MissionCard، ClinicCard، DonationProgress، InvoiceCard، ConsentForm، ScheduleEditor، CaregiverCard، PlacementTimeline و DailyReportCard هستند. CaregiverCard فقط DTO عمومی را نمایش می‌دهد و به جای نشان تأیید، امتیاز، تعداد نظر و سابقه را با متن «CatBuzz هویت یا کیفیت نگهدارندگان را تأیید نمی‌کند» نشان می‌دهد (D21). نوار «پرداخت داخل برنامه فعال نیست» تا تصمیم D19 روی هزینهٔ اعلام‌شده دیده می‌شود.
 
 View دادهٔ آماده و callback intent می‌گیرد. CatCard با کلیک، intent انتخاب را ارسال می‌کند؛ درخواست API و مجوز دسترسی داخل کارت قرار نمی‌گیرد. اشتراک کامپوننت زمانی ایجاد شود که کاربرد مشترک واقعی دارد. فایل بزرگ برای تمام قابلیت‌های محصول ایجاد نشود.
 

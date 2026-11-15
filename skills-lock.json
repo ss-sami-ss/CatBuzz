@@ -8,6 +8,13 @@
       "computedHash": "c622e29fa956aea703dc4e2b8726d9a017d438beb284a60bc3fdb2540c602102",
       "installMode": "copy"
     },
+    "choreograph": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/choreograph/SKILL.md",
+      "computedHash": "a33a7cf57eacff502f833778eed62244fb5a890bb25124dacde73bcf8716218c",
+      "installMode": "copy"
+    },
     "emil-design-eng": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
@@ -20,6 +27,27 @@
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "83485963700bcf11d5bf78118facb301676b69d918fee2e45a95e7f1a2840f6c",
+      "installMode": "copy"
+    },
+    "gestures": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/gestures/SKILL.md",
+      "computedHash": "f17aa90d244bed37d09a608f9b8f58cd7a8dd6b9ff1a06fe2217f6f242c624f7",
+      "installMode": "copy"
+    },
+    "pick-ui-library": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pick-ui-library/SKILL.md",
+      "computedHash": "3bc44e7faccb949583f4af6c8a15b5a50acc04a5e656f5168a96e5aa43e9f3cd",
+      "installMode": "copy"
+    },
+    "review-animations": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-animations/SKILL.md",
+      "computedHash": "50f1de2394b88bb3433eca1e30da6866a4e310963d872a66af20ca77fd77f07d",
       "installMode": "copy"
     },
     "vercel-react-best-practices": {
