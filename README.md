@@ -23,6 +23,7 @@
 - [پرداخت، فاکتور و شفافیت](docs/10-FINANCE.md)
 - [دامپزشکی، سرپرستی و مشاوره](docs/11-CARE-AND-COUNSELING.md)
 - [برنامهٔ آزمون](docs/12-QA-ACCEPTANCE.md)
+- [طراحی حرکت](docs/18-MOTION-DESIGN.md)
 - [توسعه، عملیات و انتشار](docs/13-DEVOPS.md)
 - [ردیابی نیازها](docs/16-TRACEABILITY.md)
 - [منابع و سابقه](docs/17-SOURCES.md)
