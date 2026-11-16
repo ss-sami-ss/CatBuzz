@@ -25,7 +25,7 @@ describe("formatLastSeen", () => {
 describe("toCatCardData", () => {
   it("labels unnamed cats explicitly", () => {
     const card = toCatCardData(
-      { id: "c1", name: null, needs: [], lastSeenAt: ago(10), publicAreaLabel: "محله", careStatus: "unknown", thumbnailUrl: null },
+      { id: "c1", name: null, needs: [], lastSeenAt: ago(10), publicArea: { cellId: "cell-1", label: "محله", approximate: true }, careStatus: "unknown", thumbnailUrl: null },
       now,
       "smoke",
       true,

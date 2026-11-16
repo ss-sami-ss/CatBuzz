@@ -30,7 +30,7 @@ export function toCatCardData(
     name: cat.name ?? "بی‌نام",
     needs: cat.needs,
     lastSeenLabel: formatLastSeen(cat.lastSeenAt, now),
-    areaLabel: cat.publicAreaLabel,
+    areaLabel: cat.publicArea.label,
     careLabel: CARE_LABELS[cat.careStatus],
     isSample,
     tone,

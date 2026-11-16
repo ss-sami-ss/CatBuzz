@@ -14,6 +14,15 @@
 
 cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دارای tie-breaker id است. bounded bbox و zoom اعتبارسنجی شوند. نام و مکان دقیق در cursor عمومی رمزگشایی‌پذیر قرار نگیرد. قرارداد تغییر breaking با نسخه و برنامهٔ مهاجرت ثبت شود.
 
+## پیاده‌سازی اجرایی (T06، 2026-11-16)
+
+- **منبع واحد:** schemaهای zod 4.6.7 در `src/shared/contracts` (common، errors، envelope، auth، users، cats، map، caregivers، placements). route handlerها با همین schemaها اعتبارسنجی می‌کنند و نوع‌های TypeScript از آن‌ها گرفته می‌شود.
+- **OpenAPI:** سند 3.1 در `GET /api/v1/openapi.json` از همان schemaها تولید می‌شود (`src/server/http/openapi.ts`). هر عملیات `x-task` دارد و تا ساخت آن تسک فقط قرارداد است.
+- **پاسخ و خطا:** `withApi`، `ok`، `parseJson` و `parseQuery` در `src/server/http/respond.ts`. خطای فیلد 422 با پیام فارسی (locale فارسی zod)، JSON خراب 400، خطای ناشناخته 500 بدون جزئیات داخلی و با requestId. پاسخ‌ها پیش‌فرض `no-store` هستند. فهرست کدها و پیام‌ها در `src/shared/contracts/errors.ts` است.
+- **cursor:** فقط کلید مرتب‌سازی و id، با امضای HMAC (`CURSOR_SECRET`). cursor دست‌کاری‌شده یا متعلق به secret دیگر 422 `INVALID_CURSOR` می‌گیرد.
+- **حریم خصوصی:** آزمون خودکار بررسی می‌کند که DTOهای عمومی هیچ کلید خصوصی (مکان دقیق، تلفن، نشانی، نام واقعی، فاصله و ...) ندارند و فیلد اضافهٔ کوئری حذف می‌شود. `platformVerified` فقط `false` پذیرفته می‌شود (D21).
+- schema بقیهٔ endpointها همراه تسک سازندهٔ همان endpoint اضافه می‌شود.
+
 ## endpointهای اصلی
 
 | Method / path | مجوز و قرارداد |

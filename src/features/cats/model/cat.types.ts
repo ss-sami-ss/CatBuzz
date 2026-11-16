@@ -1,16 +1,7 @@
-/** Needs shown on public cat summaries (docs/04 home filters). */
-export type CatNeed = "urgent" | "medical" | "food_water" | "adoption";
+import type { CatNeed } from "@/shared/contracts/cats";
 
-/** Mirrors the public map/list DTO in docs/07: no exact location, contact or real names. */
-export type PublicCatSummary = {
-  id: string;
-  name: string | null;
-  needs: CatNeed[];
-  lastSeenAt: string;
-  publicAreaLabel: string;
-  careStatus: "has_caretaker" | "no_caretaker" | "unknown";
-  thumbnailUrl: string | null;
-};
+/** Wire types come from the API contract (src/shared/contracts, T06). */
+export type { CatNeed, PublicCatSummary } from "@/shared/contracts/cats";
 
 /** Display-ready card data; the view never formats or fetches (MVI). */
 export type CatCardData = {
