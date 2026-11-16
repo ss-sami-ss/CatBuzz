@@ -2,6 +2,16 @@
 
 این سند مدل منطقی است. migration اجرایی و schema نهایی در T05 ساخته و آزمون می‌شوند. شناسه‌ها UUID، timestampها timestamptz، پول عدد صحیح واحد خرد همراه currency و وضعیت‌ها enum/check معتبر هستند. تاریخ نمایش فارسی در DB به‌عنوان timestamp متنی ذخیره نشود.
 
+## پیاده‌سازی اجرایی (T05، 2026-11-16)
+
+- **ابزار:** Drizzle ORM 0.45.4 با درایور postgres.js 3.4.9 (نسخهٔ 4 دو هفته پیش منتشر شده بود و کنار گذاشته شد) و drizzle-kit 0.31.11. نام ستون‌ها snake_case و خودکار است (`casing`).
+- **schema:** `src/server/db/schema` در ۱۲ فایل دامنه‌ای، شامل 61 جدول P1. جدول‌های پرداخت، ویزیت و journal مالی P2 هستند و در T35 تا T42 اضافه می‌شوند.
+- **migration:** `src/server/db/migrations`. فایل `0000_init` ابتدا افزونه‌های postgis و btree_gist را می‌سازد. `0001_constraints` قیودی را می‌سازد که Drizzle بیان نمی‌کند: exclusion روی (`cat_id`، `period`) در `placement_cats` فعال، و trigger فقط‌افزودنی برای `mission_updates` و `audit_logs`.
+- **قیود مهم پیاده‌شده:** نام کاربری نرمال یکتا؛ گربهٔ owned دقیقاً با owner و بدون نمایش عمومی؛ ادغام با canonical؛ رابطهٔ بدون self-reference؛ `accepted_count <= capacity` مأموریت در DB؛ یک assignment فعال؛ یک منشأ برای placement؛ in_care فقط پس از دو تأیید تحویل؛ امتیاز ۱ تا ۵ و یک نظر برای هر نویسنده؛ قیمت‌گذاری free/paid معتبر؛ مبلغ مثبت و ارز ISO؛ بازبین مستقل هزینه؛ dedupe در occurrence، اعلان، پیام و idempotency key.
+- **مکان:** نقطهٔ خصوصی `geometry(Point, 4326)` با ایندکس GiST و سلول عمومی جدا (`src/server/geo/public-cell.ts`، شبکهٔ 0.01 درجه؛ T11 می‌تواند آن را تغییر دهد).
+- **seed:** `npm run db:seed` فقط روی DB محلی اجرا می‌شود و همهٔ نام‌ها «نمونه» دارند. اگر داده وجود داشته باشد بدون `-- --reset` کاری نمی‌کند.
+- **آزمون:** `npm run test:db` دیتابیس `catbuzz_test` را کامل پاک می‌کند، migrationها را از صفر اجرا می‌کند و قیود بحرانی را می‌آزماید، از جمله سه پذیرش هم‌زمان برای آخرین جای مأموریت که فقط یکی موفق می‌شود.
+
 ## جداول اصلی
 
 | مجموعه | فیلدها و روابط ضروری |
