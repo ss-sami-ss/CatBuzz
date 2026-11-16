@@ -50,6 +50,7 @@ Copy-Item .env.example .env.local   # فقط مقدارهای محلی؛ secret 
 npm run infra:up     # PostgreSQL/PostGIS، Redis و storage سازگار با S3 (SeaweedFS)
 npm run infra:check  # PostGIS در دو دیتابیس، سیاست Redis و bucketها
 npm run db:migrate   # ساخت جدول‌ها
+# ایمیل‌های فعال‌سازی محلی: http://127.0.0.1:58025 (Mailpit)
 npm run db:seed      # دادهٔ نمونهٔ علامت‌دار (فقط local)
 npm run test:db      # آزمون migration و قیود روی catbuzz_test
 npm run dev          # http://localhost:3000

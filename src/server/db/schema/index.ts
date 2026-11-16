@@ -10,3 +10,4 @@ export * from "./placements";
 export * from "./scheduling";
 export * from "./counseling";
 export * from "./ops";
+export * from "./auth";

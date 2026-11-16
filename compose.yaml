@@ -61,6 +61,19 @@ services:
     entrypoint: ["/bin/sh", "/create-buckets.sh"]
     restart: "no"
 
+  mail:
+    # Local SMTP catcher: activation emails are really sent and land in its inbox UI
+    # (http://127.0.0.1:58025). Nothing leaves the machine.
+    image: axllent/mailpit:v1.33.0
+    ports:
+      - "127.0.0.1:${CATBUZZ_SMTP_PORT:-51025}:1025"
+      - "127.0.0.1:${CATBUZZ_MAIL_UI_PORT:-58025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
 volumes:
   db-data:
   redis-data:

@@ -1,20 +1,10 @@
 import { eq } from "drizzle-orm";
-import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDb } from "@/server/db/client";
 import { runMigrations } from "@/server/db/migrate";
+import { resetTestDb, TEST_URL } from "./test-env";
 import * as s from "@/server/db/schema";
 import { seed } from "@/server/db/seed";
-
-try {
-  process.loadEnvFile(".env.local");
-} catch {
-  // DATABASE_URL_TEST may come from the shell
-}
-const TEST_URL = process.env.DATABASE_URL_TEST;
-if (!TEST_URL || !/\/catbuzz_test(\?|$)/.test(TEST_URL)) {
-  throw new Error("DATABASE_URL_TEST must point at the catbuzz_test database (see .env.example).");
-}
 
 const { sql: client, db } = createDb(TEST_URL, { max: 4 });
 
@@ -36,11 +26,8 @@ async function newUser(name: string) {
 }
 
 beforeAll(async () => {
-  // Empty database: drop everything, then apply migrations from scratch (docs/06 "هر migration روی DB خالی").
-  const admin = postgres(TEST_URL, { max: 1, onnotice: () => {} });
-  await admin.unsafe("DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
-  await admin.end();
-  await runMigrations(TEST_URL);
+  // Empty database, then migrations from scratch (docs/06 "هر migration روی DB خالی").
+  await resetTestDb();
 });
 
 afterAll(async () => {

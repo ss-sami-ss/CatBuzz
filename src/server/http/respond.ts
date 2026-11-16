@@ -30,7 +30,25 @@ export function errorResponse(ctx: ApiContext, error: ApiError) {
     error: { code: error.code, message: error.message, fieldErrors: error.fieldErrors },
     requestId: ctx.requestId,
   };
-  return Response.json(body, { status: error.status, headers: { "x-request-id": ctx.requestId, ...NO_STORE } });
+  const headers: Record<string, string> = { "x-request-id": ctx.requestId, ...NO_STORE };
+  if ("retryAfterSec" in error) headers["Retry-After"] = String(error.retryAfterSec);
+  return Response.json(body, { status: error.status, headers });
+}
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/**
+ * CSRF guard for cookie-authenticated mutations (docs/09): when the session cookie is sent on a
+ * state-changing request, the browser's Origin must be our own APP_ORIGIN.
+ */
+export function assertSameOrigin(request: Request) {
+  if (SAFE_METHODS.has(request.method) || !request.headers.get("cookie")?.includes("catbuzz_session=")) return;
+  const appOrigin = process.env.APP_ORIGIN;
+  const origin = request.headers.get("origin");
+  const sameSite = request.headers.get("sec-fetch-site") === "same-origin";
+  if (origin ? origin !== appOrigin : !sameSite) {
+    throw new ApiError("FORBIDDEN", { message: "درخواست از مبدأ نامعتبر رد شد." });
+  }
 }
 
 /** Zod issues → {"a.b": ["پیام"]} with Persian messages from the fa locale. */
@@ -72,6 +90,7 @@ export function withApi<P = Record<string, never>>(handler: Handler<P>) {
   return async (request: Request, route?: { params?: Promise<P> }) => {
     const ctx = { requestId: requestIdFrom(request) };
     try {
+      assertSameOrigin(request);
       const params = (route?.params ? await route.params : {}) as P;
       return await handler(request, { ...ctx, params });
     } catch (error) {

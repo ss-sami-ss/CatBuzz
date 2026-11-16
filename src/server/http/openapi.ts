@@ -34,14 +34,15 @@ type Operation = {
   query?: z.ZodObject;
   body?: keyof typeof REQUESTS;
   idempotent?: boolean;
-  success: { status: 200 | 201; data?: keyof typeof RESPONSES; list?: boolean };
+  success: { status: 200 | 201 | 204; data?: keyof typeof RESPONSES; list?: boolean };
   errors: number[];
 };
 
 const OPERATIONS: Operation[] = [
   { method: "post", path: "/auth/challenges", summary: "ارسال کد فعال‌سازی", task: "T07", auth: false, body: "AuthChallengeRequest", success: { status: 201, data: "AuthChallengeResponse" }, errors: [422, 429] },
   { method: "post", path: "/auth/verify", summary: "تأیید کد و شروع نشست", task: "T07", auth: false, body: "AuthVerifyRequest", success: { status: 200, data: "MeDto" }, errors: [422, 429] },
-  { method: "get", path: "/me", summary: "پروفایل خصوصی خود", task: "T08", auth: true, success: { status: 200, data: "MeDto" }, errors: [401] },
+  { method: "post", path: "/auth/logout", summary: "خروج (all=1 برای همهٔ دستگاه‌ها)", task: "T07", auth: true, success: { status: 204 }, errors: [403] },
+  { method: "get", path: "/me", summary: "پروفایل خصوصی خود", task: "T07", auth: true, success: { status: 200, data: "MeDto" }, errors: [401] },
   { method: "patch", path: "/me", summary: "ویرایش پروفایل خود", task: "T08", auth: true, body: "UpdateMeRequest", success: { status: 200, data: "MeDto" }, errors: [401, 409, 422] },
   { method: "get", path: "/map", summary: "نشانگرهای عمومی نقشه", task: "T11", auth: false, query: MapQuery, success: { status: 200, data: "PublicMapItem", list: true }, errors: [422] },
   { method: "get", path: "/cats", summary: "فهرست عمومی گربه‌ها", task: "T12", auth: false, query: CatListQuery, success: { status: 200, data: "PublicCatSummary", list: true }, errors: [422] },
@@ -76,10 +77,13 @@ function buildOperation(op: Operation) {
     ...(parameters.length ? { parameters } : {}),
     ...(op.body ? { requestBody: { required: true, content: { "application/json": { schema: ref(op.body) } } } } : {}),
     responses: {
-      [op.success.status]: {
-        description: "موفق",
-        content: { "application/json": { schema: { type: "object", required: ["data", "meta"], properties: { data: dataSchema, meta } } } },
-      },
+      [op.success.status]:
+        op.success.status === 204
+          ? { description: "موفق، بدون بدنه" }
+          : {
+              description: "موفق",
+              content: { "application/json": { schema: { type: "object", required: ["data", "meta"], properties: { data: dataSchema, meta } } } },
+            },
       ...Object.fromEntries(
         op.errors.map((status) => [status, { description: "خطا", content: { "application/json": { schema: ref("ErrorEnvelope") } } }]),
       ),
