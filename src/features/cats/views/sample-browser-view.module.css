@@ -35,6 +35,17 @@
   font-size: var(--text-sm);
 }
 
+.link {
+  color: var(--color-primary);
+  font-weight: var(--weight-medium);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr;

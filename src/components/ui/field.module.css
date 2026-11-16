@@ -1,0 +1,80 @@
+/* Shared parts of labeled form controls (TextField, SelectField). */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+}
+
+.required {
+  color: var(--color-urgent);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.error {
+  display: flex;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-urgent);
+  /* Appears after submit: opacity only, so the form below does not jump twice. */
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.error[data-starting-style],
+.error[data-ending-style] {
+  opacity: 0;
+}
+
+/* Shared box of text inputs and the select trigger. */
+.control {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--target-min);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  /* 16px keeps iOS Safari from zooming on focus. */
+  font-size: var(--text-md);
+  line-height: 1.6;
+}
+
+.control::placeholder {
+  color: var(--color-muted);
+}
+
+.control:focus-visible,
+.control[data-popup-open] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -1px;
+}
+
+.control[data-invalid] {
+  border-color: var(--color-urgent);
+}
+
+.control[data-invalid]:focus-visible {
+  outline-color: var(--color-urgent);
+}
+
+.control:disabled,
+.control[data-disabled] {
+  cursor: not-allowed;
+  background-color: var(--color-surface-muted);
+  color: var(--color-muted);
+}
+

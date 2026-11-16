@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { DetailsSurface } from "@/components/motion/details-surface";
 import { staggerItemProps } from "@/components/motion/stagger";
 import { useDelayedVisibility } from "@/components/motion/use-delayed-visibility";
@@ -28,7 +29,12 @@ export function SampleBrowserView({ cats }: { cats: CatCardData[] }) {
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>گربه‌های نزدیک (نمونه)</h1>
-          <p className={styles.subtitle}>کارت گربه، stagger، skeleton و bottom sheet / Dialog</p>
+          <p className={styles.subtitle}>
+            کارت گربه، stagger، skeleton و bottom sheet / Dialog —{" "}
+            <Link href="/sample/forms" className={styles.link}>
+              نمونهٔ فرم‌ها
+            </Link>
+          </p>
         </div>
         <Button
           variant="secondary"

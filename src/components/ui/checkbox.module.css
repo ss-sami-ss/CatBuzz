@@ -1,0 +1,100 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.row {
+  display: flex;
+  /* Box sits beside the first line when the label wraps. */
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  padding-block: var(--space-2);
+  box-sizing: border-box;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.field[data-disabled] .row {
+  cursor: not-allowed;
+  color: var(--color-muted);
+}
+
+.box {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin: calc((1lh - 22px) / 2) 0 0;
+  padding: 0;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 6px;
+  background-color: var(--color-surface);
+  color: var(--color-on-primary);
+  cursor: inherit;
+  /* Press feedback only; the fill switches instantly (frequent control, docs/18 §1). */
+  transition: transform var(--duration-press) var(--ease-out);
+}
+
+.row:active .box:not([data-disabled]) {
+  transform: scale(var(--press-scale));
+}
+
+.box[data-checked] {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+}
+
+.box[data-invalid] {
+  border-color: var(--color-urgent);
+}
+
+.box[data-disabled] {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-muted);
+}
+
+.box[data-disabled][data-checked] {
+  color: var(--color-muted);
+}
+
+.box:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.indicator {
+  display: flex;
+  transition:
+    transform var(--duration-press) var(--ease-out),
+    opacity var(--duration-press) var(--ease-out);
+}
+
+.indicator[data-starting-style],
+.indicator[data-ending-style] {
+  opacity: 0;
+  transform: scale(var(--enter-scale));
+}
+
+.text {
+  font-size: var(--text-md);
+}
+
+.description,
+.error {
+  margin: 0;
+  padding-inline-start: calc(22px + var(--space-3));
+}
+
+.description {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--color-urgent);
+}

@@ -1,0 +1,87 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.list {
+  position: relative;
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border);
+  scrollbar-width: none;
+}
+
+.tab {
+  position: relative;
+  flex-shrink: 0;
+  min-height: var(--target-min);
+  margin: 0;
+  padding: 0 var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab[data-active] {
+  color: var(--color-primary);
+  font-weight: var(--weight-bold);
+}
+
+/*
+ * Active marker is shape plus color, not color alone (WCAG 1.4.1). A full-width bar is
+ * clipped to the active tab, so the move animates clip-path instead of width or left.
+ * Base UI measures --active-tab-left from the physical left edge, also in RTL.
+ */
+.indicator {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 3px;
+  background-color: var(--color-primary);
+  clip-path: inset(
+    0 calc(100% - var(--active-tab-left) - var(--active-tab-width) + var(--space-2)) 0
+      calc(var(--active-tab-left) + var(--space-2)) round 3px 3px 0 0
+  );
+  transition: clip-path var(--duration-base) var(--ease-in-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+}
+
+.tab[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover:not([data-active], [data-disabled]) {
+    color: var(--color-text);
+  }
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+.panel {
+  outline: 0;
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}

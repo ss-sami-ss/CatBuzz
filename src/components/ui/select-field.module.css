@@ -1,0 +1,101 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: start;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value[data-placeholder] {
+  color: var(--color-muted);
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .trigger:hover:not([data-disabled]) {
+    border-color: var(--color-text);
+  }
+}
+
+.positioner {
+  z-index: 50;
+  outline: 0;
+}
+
+.popup {
+  box-sizing: border-box;
+  min-width: var(--anchor-width);
+  max-height: min(var(--available-height), 20rem);
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card), 0 8px 24px rgb(24 35 29 / 10%);
+  outline: 0;
+  /* Anchored to the trigger: grow from it (docs/18 §6). Exit is faster than entry. */
+  transform-origin: var(--transform-origin);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+  opacity: 0;
+  transform: scale(var(--enter-scale));
+}
+
+.popup[data-ending-style] {
+  transition-duration: var(--duration-press);
+}
+
+.list {
+  outline: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-md);
+  cursor: default;
+  user-select: none;
+  outline: 0;
+}
+
+.item[data-highlighted] {
+  background-color: var(--color-primary-soft);
+}
+
+.item[data-selected] {
+  font-weight: var(--weight-bold);
+  color: var(--color-primary);
+}
+
+.item[data-disabled] {
+  color: var(--color-muted);
+}
+
+.indicator {
+  display: flex;
+  color: var(--color-primary);
+}
