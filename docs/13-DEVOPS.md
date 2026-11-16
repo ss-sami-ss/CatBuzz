@@ -4,6 +4,10 @@
 
 local، staging و production دیتابیس، bucket، secret و callback جدا دارند. دادهٔ واقعی production به لپ‌تاپ و staging کپی نشود. در local از PostgreSQL/PostGIS و سرویس‌های آزمایشی استفاده شود. ابزار package manager در T02 انتخاب و lockfile commit شود.
 
+### محیط local (T03، 2026-11-16)
+
+`compose.yaml` سه سرویس دارد: PostgreSQL 18 با PostGIS 3.7 (`postgis/postgis:18-3.7-alpine`؛ دیتابیس `catbuzz` و `catbuzz_test` هر دو با افزونهٔ postgis)، Redis 8.8.4 با `noeviction` و AOF برای BullMQ، و SeaweedFS 4.51 به‌عنوان storage سازگار با S3 با دو bucket `catbuzz-private` و `catbuzz-public`. MinIO تصویر Docker عمومی منتشر نمی‌کند و انتخاب نشد. چون کد فقط با API استاندارد S3 کار می‌کند، provider واقعی staging/production (D12) مستقل از این انتخاب است. همهٔ پورت‌ها فقط روی 127.0.0.1 باز هستند و رمزهای compose مقدار محلی عمومی‌اند، نه secret. دستورها در README آمده‌اند. staging تا تعیین D12 (محل میزبانی) باز است.
+
 ## متغیرهای نمونه
 
 `DATABASE_URL`، `REDIS_URL`، `AUTH_SECRET`، `APP_ORIGIN`، `STORAGE_ENDPOINT`، `STORAGE_BUCKET_PRIVATE`، `STORAGE_BUCKET_PUBLIC`، `STORAGE_ACCESS_KEY`، `STORAGE_SECRET_KEY`، `SMS_PROVIDER_KEY` یا `EMAIL_PROVIDER_KEY`، `PAYMENT_PROVIDER_SECRET`، `PAYMENT_WEBHOOK_SECRET`، `REALTIME_SECRET` و شناسهٔ عمومی نقشه در صورت نیاز.

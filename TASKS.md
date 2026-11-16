@@ -14,7 +14,7 @@
 |---|---|---|---|---|---|---|---|
 | T01 | P1 | Claude | — | تثبیت دامنه و تصمیم‌ها | D01–D16 مرور و owner/موعد ثبت؛ P1/P2 و فرض ویزیت متنی به کارفرما ارائه شود | R01, R14, R18 | done (2026-11-15؛ D01–D26 با مالک و موعد در DECISIONS؛ گزارش مرحلهٔ ۴ تأیید شد) |
 | T02 | P1 | Claude | T01 | راه‌اندازی Next.js و ابزارها | نسخه‌های سازگار lock، TypeScript strict، lint و production build موفق | R22 | done (2026-11-15؛ نسخه‌های دقیق در package.json/lockfile، strict، typecheck/lint/build پاس) |
-| T03 | P1 | Claude | T02 | زیرساخت local و staging | DB/PostGIS، storage/queue آزمایشی و env.example بدون secret قابل راه‌اندازی | R22 | todo |
+| T03 | P1 | Claude | T02 | زیرساخت local و staging | DB/PostGIS، storage/queue آزمایشی و env.example بدون secret قابل راه‌اندازی | R22 | in_progress (2026-11-16؛ local کامل: compose با PostGIS 3.7، Redis 8.8.4 و SeaweedFS 4.51، .env.example بدون secret، infra:up/check/down؛ infra:check پاس و rerun idempotent؛ staging منتظر D12 کارفرما) |
 | T04 | P1 | Claude | T02 | سیستم طراحی و پوسته RTL | کامپوننت‌های پایه، focus و layout عرض 360/768/1440 با تصویر مرجع تطبیق یابد | R04 | done (2026-11-16؛ توکن‌ها، src/components/motion، Button/Skeleton/DetailsSurface، TextField/SelectField/Checkbox/Tabs و Toaster (Sonner 2.0.8) با DirectionProvider RTL؛ نمونه‌ها در /sample و /sample/forms؛ typecheck/lint/35 تست واحد/build و 24 تست Playwright در 360/1440/حرکت کامل پاس) |
 | T05 | P1 | Claude | T03 | schema و migration پایه | مدل P1 و قیود یکتا/روابط روی DB خالی و seed ساختگی کار کند | R05, R06, R22 | todo |
 | T06 | P1 | Claude | T02 | قراردادهای API و خطا | schema/OpenAPI، DTO عمومی/خصوصی، error و cursor نمونه قابل اعتبارسنجی | R22 | todo |
