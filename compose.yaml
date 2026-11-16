@@ -1,0 +1,67 @@
+# Local development stack (T03, docs/13). Not for staging or production.
+# Host ports 55432/56379/58333 avoid clashing with other local stacks; override with CATBUZZ_*_PORT.
+# Credentials here are fixed local-only values, published on purpose; real secrets never go in this file.
+name: catbuzz
+
+services:
+  db:
+    image: postgis/postgis:18-3.7-alpine
+    environment:
+      POSTGRES_USER: catbuzz
+      POSTGRES_PASSWORD: catbuzz-local-only
+      POSTGRES_DB: catbuzz
+    ports:
+      - "127.0.0.1:${CATBUZZ_DB_PORT:-55432}:5432"
+    volumes:
+      # PostgreSQL 18 images keep data under /var/lib/postgresql/<major>/docker.
+      - db-data:/var/lib/postgresql
+      - ./infra/local/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catbuzz -d catbuzz"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:8.8.4-alpine
+    # BullMQ requires noeviction; AOF keeps queued jobs across restarts (Q13).
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "127.0.0.1:${CATBUZZ_REDIS_PORT:-56379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  storage:
+    # S3-compatible object storage for local uploads (MinIO no longer publishes images).
+    image: chrislusf/seaweedfs:4.51
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"]
+    ports:
+      - "127.0.0.1:${CATBUZZ_STORAGE_PORT:-58333}:8333"
+    volumes:
+      - storage-data:/data
+      - ./infra/local/storage/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9333/cluster/status | grep -q '\"IsLeader\":true'"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  storage-init:
+    image: chrislusf/seaweedfs:4.51
+    depends_on:
+      storage:
+        condition: service_healthy
+    volumes:
+      - ./infra/local/storage/create-buckets.sh:/create-buckets.sh:ro
+    entrypoint: ["/bin/sh", "/create-buckets.sh"]
+    restart: "no"
+
+volumes:
+  db-data:
+  redis-data:
+  storage-data:

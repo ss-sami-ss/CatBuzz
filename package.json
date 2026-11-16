@@ -13,7 +13,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "infra:up": "docker compose up -d --wait db redis storage && docker compose run --rm storage-init",
+    "infra:down": "docker compose down",
+    "infra:check": "node scripts/infra-check.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

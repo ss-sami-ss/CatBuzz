@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "catbuzz-local",
+      "credentials": [{ "accessKey": "catbuzz-local", "secretKey": "catbuzz-local-only-secret" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

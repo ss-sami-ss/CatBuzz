@@ -42,13 +42,20 @@
 
 ## اجرای محلی (PowerShell)
 
-پیش‌نیاز: Node.js 20.9 یا جدیدتر (روی 26.5.0 آزمایش شد).
+پیش‌نیاز: Node.js 20.9 یا جدیدتر (روی 26.5.0 آزمایش شد) و Docker Desktop برای سرویس‌های محلی.
 
 ```powershell
 npm ci
-npm run dev        # http://localhost:3000
-npm run check      # typecheck + lint + test + build
+Copy-Item .env.example .env.local   # فقط مقدارهای محلی؛ secret واقعی نگذارید
+npm run infra:up     # PostgreSQL/PostGIS، Redis و storage سازگار با S3 (SeaweedFS)
+npm run infra:check  # PostGIS در دو دیتابیس، سیاست Redis و bucketها
+npm run dev          # http://localhost:3000
+npm run check        # typecheck + lint + test + build
+npm run test:e2e     # Playwright (یک بار: npx playwright install chromium)
+npm run infra:down   # توقف سرویس‌ها؛ داده در volume می‌ماند
 ```
+
+پورت‌های محلی 55432 (DB)، 56379 (Redis) و 58333 (S3) هستند تا با پروژه‌های دیگر روی همان سیستم تداخل نکنند. صفحه‌های نمونهٔ طراحی در `/sample` و `/sample/forms` هستند.
 
 ## تعریف تحویل
 
