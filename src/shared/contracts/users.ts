@@ -32,3 +32,18 @@ export const UpdateMeRequest = z
     version: Version,
   })
   .meta({ id: "UpdateMeRequest" });
+
+/** Volunteer capabilities (R02). Veterinary competence is never self-declared here; it needs a verified credential (T09). */
+export const Capability = z
+  .enum(["feeding", "transport", "trapping", "foster", "medication", "fundraising", "photography"])
+  .meta({ id: "Capability" });
+
+export const CapabilitiesDto = z.object({ capabilities: z.array(Capability) }).meta({ id: "CapabilitiesDto" });
+
+export const PutCapabilitiesRequest = z
+  .object({ capabilities: z.array(Capability).max(7) })
+  .refine((r) => new Set(r.capabilities).size === r.capabilities.length, { message: "توانمندی تکراری است.", path: ["capabilities"] })
+  .meta({ id: "PutCapabilitiesRequest" });
+
+export type Capability = z.infer<typeof Capability>;
+export type MeDto = z.infer<typeof MeDto>;

@@ -1,4 +1,6 @@
 import { AuthChallengeRequest, AuthVerifyRequest } from "@/shared/contracts/auth";
+import { PutCapabilitiesRequest, UpdateMeRequest } from "@/shared/contracts/users";
+import { getCapabilities, setCapabilities, updateMe } from "../account/account-service";
 import { getDb } from "../db/client";
 import { createSmtpSender } from "../email/email-sender";
 import { serverEnv } from "../env";
@@ -46,6 +48,23 @@ export function createAuthHandlers(deps: AuthHandlerDeps) {
       const me = await loadMe(deps.db, session.userId);
       if (!me) throw new ApiError("UNAUTHENTICATED");
       return ok(ctx, me);
+    }),
+
+    updateMe: withApi(async (request, ctx) => {
+      const session = await requireSession(request);
+      const input = await parseJson(request, UpdateMeRequest);
+      return ok(ctx, await updateMe(deps.db, session.userId, input));
+    }),
+
+    getCapabilities: withApi(async (request, ctx) => {
+      const session = await requireSession(request);
+      return ok(ctx, { capabilities: await getCapabilities(deps.db, session.userId) });
+    }),
+
+    putCapabilities: withApi(async (request, ctx) => {
+      const session = await requireSession(request);
+      const input = await parseJson(request, PutCapabilitiesRequest);
+      return ok(ctx, { capabilities: await setCapabilities(deps.db, session.userId, input.capabilities) });
     }),
 
     requireSession,

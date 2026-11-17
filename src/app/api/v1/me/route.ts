@@ -5,3 +5,7 @@ export const dynamic = "force-dynamic";
 export function GET(request: Request) {
   return authHandlers().me(request);
 }
+
+export function PATCH(request: Request) {
+  return authHandlers().updateMe(request);
+}

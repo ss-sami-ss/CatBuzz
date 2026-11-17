@@ -5,7 +5,7 @@ import { CatListQuery, CreateCatRequest, PublicCatSummary } from "@/shared/contr
 import { ErrorEnvelope } from "@/shared/contracts/errors";
 import { MapQuery, PublicMapItem } from "@/shared/contracts/map";
 import { CreatePlacementRequest, PlacementDecisionRequest } from "@/shared/contracts/placements";
-import { MeDto, PublicUserSummary, UpdateMeRequest } from "@/shared/contracts/users";
+import { CapabilitiesDto, MeDto, PublicUserSummary, PutCapabilitiesRequest, UpdateMeRequest } from "@/shared/contracts/users";
 
 /**
  * OpenAPI 3.1 document generated from the runtime zod contracts (T06), so the document and
@@ -22,8 +22,8 @@ function toSchema(schema: z.ZodType, io: "input" | "output"): JsonSchema {
   return json;
 }
 
-const REQUESTS = { AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
-const RESPONSES = { AuthChallengeResponse, MeDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
+const REQUESTS = { AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
+const RESPONSES = { AuthChallengeResponse, MeDto, CapabilitiesDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
 
 type Operation = {
   method: "get" | "post" | "put" | "patch";
@@ -43,7 +43,9 @@ const OPERATIONS: Operation[] = [
   { method: "post", path: "/auth/verify", summary: "تأیید کد و شروع نشست", task: "T07", auth: false, body: "AuthVerifyRequest", success: { status: 200, data: "MeDto" }, errors: [422, 429] },
   { method: "post", path: "/auth/logout", summary: "خروج (all=1 برای همهٔ دستگاه‌ها)", task: "T07", auth: true, success: { status: 204 }, errors: [403] },
   { method: "get", path: "/me", summary: "پروفایل خصوصی خود", task: "T07", auth: true, success: { status: 200, data: "MeDto" }, errors: [401] },
-  { method: "patch", path: "/me", summary: "ویرایش پروفایل خود", task: "T08", auth: true, body: "UpdateMeRequest", success: { status: 200, data: "MeDto" }, errors: [401, 409, 422] },
+  { method: "patch", path: "/me", summary: "ویرایش پروفایل خود", task: "T08", auth: true, body: "UpdateMeRequest", success: { status: 200, data: "MeDto" }, errors: [401, 403, 409, 422] },
+  { method: "get", path: "/me/capabilities", summary: "توانمندی‌های خود", task: "T08", auth: true, success: { status: 200, data: "CapabilitiesDto" }, errors: [401] },
+  { method: "put", path: "/me/capabilities", summary: "تعیین توانمندی‌ها (صلاحیت دامپزشکی از این مسیر نیست)", task: "T08", auth: true, body: "PutCapabilitiesRequest", success: { status: 200, data: "CapabilitiesDto" }, errors: [401, 403, 422] },
   { method: "get", path: "/map", summary: "نشانگرهای عمومی نقشه", task: "T11", auth: false, query: MapQuery, success: { status: 200, data: "PublicMapItem", list: true }, errors: [422] },
   { method: "get", path: "/cats", summary: "فهرست عمومی گربه‌ها", task: "T12", auth: false, query: CatListQuery, success: { status: 200, data: "PublicCatSummary", list: true }, errors: [422] },
   { method: "post", path: "/cats", summary: "ثبت گربه", task: "T12", auth: true, body: "CreateCatRequest", success: { status: 201, data: "PublicCatSummary" }, errors: [401, 403, 422] },
