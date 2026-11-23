@@ -17,6 +17,7 @@ test("حساب جدید با کد ایمیل فعال می‌شود و تغیی�
 
   await page.goto("/");
   await page.getByRole("link", { name: "حساب کاربری" }).click();
+  await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByRole("status")).toHaveText("برای دسترسی به حساب وارد شوید.");
   await page.getByLabel("ایمیل").fill(email);
   await page.getByLabel("نوع درخواست").selectOption("sign_up");

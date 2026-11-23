@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { HomeExplorer } from "./home/home-explorer";
+import styles from "./home/home.module.css";
 
 export default function HomePage() {
   return (
-    <main>
-      <h1>CatBuzz</h1>
-      <p>این نسخه در حال ساخت است. نقشه و پرونده‌ها هنوز به سرور متصل نشده‌اند.</p>
-      <Link href="/account">حساب کاربری</Link>
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <h1 dir="ltr">CatBuzz</h1>
+        <Link href="/account">حساب کاربری</Link>
+      </header>
+      <HomeExplorer />
     </main>
   );
 }
