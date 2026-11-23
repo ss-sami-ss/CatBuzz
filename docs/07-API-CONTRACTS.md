@@ -33,7 +33,7 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET /me/credentials | وضعیت صلاحیت‌های خود با شناسه، حرفه، وضعیت و تاریخ انقضا؛ پاسخ خصوصی با no-store و بدون مدرک یا شناسهٔ بازبین |
 | POST /credentials/{id}/review | فقط بازبین منتخب فعال؛ تغییر pending به verified/rejected یا verified به revoked؛ دلیل ساخت‌یافته اجباری؛ تأیید با تاریخ اعتبار آینده و فایل خصوصی آماده؛ 409 برای وضعیت ناسازگار |
 | PUT /me/capabilities | فهرست توانمندی و محدوده؛ صلاحیت vet از این مسیر فعال نشود |
-| GET /map | bbox، zoom، filters؛ فقط PublicMapItem و cluster |
+| GET /map | عمومی؛ bbox حداکثر ۲ درجه در هر محور، zoom از ۳ تا ۲۰، needs با ویرگول (حداقل یک نیاز مشترک)؛ خروجی PublicMapItem با حداکثر ۵۰۰ نتیجه و no-store |
 | GET /cats | cursor و فیلتر؛ PublicCatSummary |
 | POST /cats | حساب فعال، نام اختیاری، ویژگی، mediaIds و observation |
 | GET/PATCH /cats/{id} | خواندن عمومی پالایش‌شده؛ ویرایش با policy و version |

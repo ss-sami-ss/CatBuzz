@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { PublicMapItem } from "@/shared/contracts/map";
+import { createMapHandler } from "@/server/geo/map-handler";
 import { createDb } from "@/server/db/client";
 import { runMigrations } from "@/server/db/migrate";
 import { resetTestDb, TEST_URL } from "./test-env";
@@ -181,5 +183,69 @@ describe("critical constraints", () => {
     expect(err.constraint).toBe("fundraiser_goal_positive");
     err = await violation(db.insert(s.expenses).values({ targetKind: "cat", targetId: payer, payerId: payer, amountMinor: 1000, category: "food", incurredAt: new Date(), reviewedBy: payer }));
     expect(err.constraint).toBe("expense_independent_reviewer");
+  });
+});
+
+describe("public map (Q02)", () => {
+  const handleMap = createMapHandler(() => db);
+  function map(bbox: string, zoom = 15, needs?: string) {
+    const query = new URLSearchParams({ bbox, zoom: String(zoom) });
+    if (needs) query.set("needs", needs);
+    return handleMap(new Request("http://localhost/api/v1/map?" + query));
+  }
+
+  it("filters by public cell center and never exposes observation coordinates, owner details or exact time", async () => {
+    const author = await newUser("sample_map_author");
+    await db.insert(s.userPrivate).values({ userId: author, firstName: "private-fixture-name" });
+    const observedAt = new Date("2026-11-16T12:34:56Z");
+    const [visible] = await db.insert(s.cats).values([
+      { createdBy: author, currentName: "گربهٔ نمونهٔ نقشه", publicCellId: "g0.01:-401:100", needs: ["medical"], lastSeenAt: observedAt },
+      { createdBy: author, currentName: "owned-map-fixture", publicCellId: "g0.01:-401:100", custody: "owned", ownerUserId: author, lastSeenAt: observedAt },
+      { createdBy: author, currentName: "inactive-map-fixture", publicCellId: "g0.01:-401:100", lifecycle: "deceased", lastSeenAt: observedAt },
+      { createdBy: author, currentName: "unlocated-map-fixture", lastSeenAt: observedAt },
+    ]).returning({ id: s.cats.id });
+    await db.insert(s.sightings).values({
+      catId: visible!.id, observerId: author, observedAt, precision: "exact",
+      location: { x: -4.00123, y: 1.00876 }, publicCellId: "g0.01:-401:100", note: "private-observation-note",
+    });
+
+    const containingPrivatePoint = await map("-4.002,1.008,-4.001,1.009");
+    expect((await containingPrivatePoint.json()).data).toEqual([]);
+    const publicResponse = await map("-4.006,1.004,-4.004,1.006", 15, "medical");
+    expect(publicResponse.status).toBe(200);
+    expect(publicResponse.headers.get("cache-control")).toBe("no-store");
+    const body = await publicResponse.json();
+    expect(body.data).toEqual([{
+      kind: "cat", id: visible!.id, name: "گربهٔ نمونهٔ نقشه", center: [-4.005, 1.005],
+      needs: ["medical"], lastSeenAt: "2026-11-16T00:00:00Z", thumbnailUrl: null,
+    }]);
+    expect(PublicMapItem.array().safeParse(body.data).success).toBe(true);
+    const filtered = await map("-4.006,1.004,-4.004,1.006", 15, "adoption");
+    expect((await filtered.json()).data).toEqual([]);
+  });
+
+  it("clusters lower zoom and shared cells, retaining deliberately coarse centers", async () => {
+    const author = await newUser("sample_map_cluster");
+    const lastSeenAt = new Date("2026-11-16T12:00:00Z");
+    await db.insert(s.cats).values([
+      { createdBy: author, publicCellId: "g0.01:200:300", lastSeenAt },
+      { createdBy: author, publicCellId: "g0.01:201:301", lastSeenAt },
+      { createdBy: author, publicCellId: "g0.01:201:301", lastSeenAt },
+      { createdBy: author, publicCellId: "g0.1:20:30", lastSeenAt },
+      { createdBy: author, publicCellId: "unknown-legacy-cell", lastSeenAt },
+    ]);
+    const low = await map("2,3,2.1,3.1", 9);
+    expect((await low.json()).data).toEqual([{
+      kind: "cluster", cellId: "g0.1:20:30", center: [2.05, 3.05], count: 4,
+    }]);
+    const high = await map("2.012,3.012,2.02,3.02", 15);
+    expect((await high.json()).data).toEqual([{
+      kind: "cluster", cellId: "g0.01:201:301", center: [2.015, 3.015], count: 2,
+    }]);
+    const coarse = await map("2.04,3.04,2.06,3.06", 18);
+    expect((await coarse.json()).data).toEqual([expect.objectContaining({ kind: "cat", center: [2.05, 3.05] })]);
+    expect((await map("2,3,5,6")).status).toBe(422);
+    expect((await map(",0,1,1")).status).toBe(422);
+    expect((await map("2,3,2.1,3.1", 21)).status).toBe(422);
   });
 });

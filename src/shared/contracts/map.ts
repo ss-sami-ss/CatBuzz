@@ -7,7 +7,8 @@ export const MapQuery = z.object({
   zoom: Zoom,
   needs: z
     .string()
-    .transform((v) => v.split(",").filter(Boolean))
+    .max(128)
+    .transform((v) => [...new Set(v.split(",").filter(Boolean))])
     .pipe(z.array(CatNeed))
     .optional(),
 });

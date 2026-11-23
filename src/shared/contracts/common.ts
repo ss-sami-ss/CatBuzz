@@ -47,7 +47,7 @@ export const BBOX_MAX_SPAN_DEG = 2;
 export const BboxParam = z
   .string()
   .transform((raw, ctx) => {
-    const parts = raw.split(",").map((part) => Number(part.trim()));
+    const parts = raw.split(",").map((part) => part.trim() ? Number(part) : Number.NaN);
     if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) {
       ctx.addIssue({ code: "custom", message: "bbox باید چهار عدد با ویرگول باشد." });
       return z.NEVER;
