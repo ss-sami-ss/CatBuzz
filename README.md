@@ -1,66 +1,36 @@
-# بستهٔ شروع پروژه CatBuzz
+# CatBuzz
 
-نسخهٔ 1.0 — تاریخ 2026-11-14 — زبان محصول فارسی و RTL
+CatBuzz is a free, Persian-language web project built to help stray cats. Its goal is to give neighbors and local volunteers a place to report cats in need, coordinate care, and follow up on what happens next.
 
-این بسته برای شروع طراحی تفصیلی و ساخت تهیه شده است. از 2026-11-15 تنها عامل توسعه Claude است (D17). همهٔ قابلیت‌های درخواستی کارفرما در PRD و جدول ردیابی ثبت شده‌اند. نام محصول CatBuzz است (پیش‌تر CATCARE) و ظاهر فعلی موقت است. نسخهٔ وب واکنش‌گرا با Next.js، TypeScript و MVI مبنای پیشنهادی است.
+## Project status
 
-## وضعیت واقعی
+CatBuzz is in development. The current code includes a local development stack, a database schema and API, email-based account activation, an account page, and professional credential review. Cat reporting, volunteer coordination, and care tracking are planned workflows. See the [product requirements](docs/02-PRD.md) for the scope of each phase.
 
-خروجی فعلی اسناد شروع، بک‌لاگ و تصویر مفهومی صفحهٔ اول است. کد اجرایی، اتصال سرویس‌ها، آزمون محصول، تأیید پزشکی یا مجوز انتشار در این بسته انجام نشده‌اند. نقص‌های شناخته‌شده به تصمیم طراحی، تسک و معیار پذیرش تبدیل شده‌اند. موارد وابسته به تصمیم کارفرما یا ارائه‌دهندگان در [تصمیم‌ها](docs/03-DECISIONS-AND-RISKS.md) باز هستند.
+## Run locally
 
-## ترتیب مطالعه
-
-1. [BRD](docs/01-BRD.md) برای هدف و قواعد کسب‌وکار.
-2. [PRD](docs/02-PRD.md) برای دامنه و معیارهای پذیرش.
-3. [تصمیم‌ها و ریسک‌ها](docs/03-DECISIONS-AND-RISKS.md) برای فرض‌ها و موانع انتشار.
-4. [UX و طراحی](docs/04-UX-DESIGN.md)، [معماری](docs/05-ARCHITECTURE.md) و [مدل داده](docs/06-DATA-MODEL.md).
-5. [API](docs/07-API-CONTRACTS.md) و [گردش‌کارها](docs/08-WORKFLOWS.md).
-6. [تسک‌ها](TASKS.md)، [برآورد](docs/14-ESTIMATE.md) و [همکاری عامل‌ها](docs/15-AI-COLLABORATION.md).
-
-## فهرست تکمیلی
-
-- [امنیت و دسترسی](docs/09-SECURITY-AND-ACCESS.md)
-- [پرداخت، فاکتور و شفافیت](docs/10-FINANCE.md)
-- [دامپزشکی، سرپرستی و مشاوره](docs/11-CARE-AND-COUNSELING.md)
-- [برنامهٔ آزمون](docs/12-QA-ACCEPTANCE.md)
-- [طراحی حرکت](docs/18-MOTION-DESIGN.md)
-- [توسعه، عملیات و انتشار](docs/13-DEVOPS.md)
-- [ردیابی نیازها](docs/16-TRACEABILITY.md)
-- [منابع و سابقه](docs/17-SOURCES.md)
-- [راهنمای عامل‌ها](AGENTS.md)، [راهنمای Claude](CLAUDE.md)، [پرامپت‌های شروع](START-PROMPTS.md)
-- [ثبت تغییرات](CHANGELOG.md)
-- [تصویر صفحهٔ اول](assets/home-desktop-mobile.png)
-- [شرح تولید تصویر](assets/IMAGE-PROMPT.md)
-- [متن گفت‌وگوی ارسالی](references/prior-chat.txt)
-- [فهرست فایل‌ها و SHA-256](MANIFEST.json)
-
-## شروع عملی
-
-بسته را در پوشهٔ پروژه استخراج کنید. فایل‌های AGENTS.md و CLAUDE.md باید در ریشهٔ مخزن توسعه باقی بمانند. ابتدا T01 تا T04 انجام شوند؛ تصمیم کشور، پرداخت یا ویزیت نباید کار مستقل روی پوسته، مدل داده و دادهٔ آزمایشی را متوقف کند. هر اتصال خارجی تا تعیین ارائه‌دهنده با adapter و دادهٔ آزمایشی علامت‌دار توسعه یابد.
-
-در شروع، شناسهٔ نسخهٔ این بسته و commit اولیه ثبت شود. تغییر دامنه ابتدا در PRD و DECISIONS ثبت و سپس به TASKS و TRACEABILITY منتقل شود. هیچ تسک این بسته از پیش تکمیل‌شده محسوب نمی‌شود.
-
-## اجرای محلی (PowerShell)
-
-پیش‌نیاز: Node.js 20.9 یا جدیدتر (روی 26.5.0 آزمایش شد) و Docker Desktop برای سرویس‌های محلی.
+Install Node.js 20.9 or later and Docker Desktop. Run these commands in PowerShell from the project folder after cloning the repository.
 
 ```powershell
 npm ci
-Copy-Item .env.example .env.local   # فقط مقدارهای محلی؛ secret واقعی نگذارید
-npm run infra:up     # PostgreSQL/PostGIS، Redis و storage سازگار با S3 (SeaweedFS)
-npm run infra:check  # PostGIS در دو دیتابیس، سیاست Redis و bucketها
-npm run db:migrate   # ساخت جدول‌ها
-# ایمیل‌های فعال‌سازی محلی: http://127.0.0.1:58025 (Mailpit)
-npm run db:seed      # دادهٔ نمونهٔ علامت‌دار (فقط local)
-npm run test:db      # آزمون migration و قیود روی catbuzz_test
-npm run dev          # http://localhost:3000
-npm run check        # typecheck + lint + test + build
-npm run test:e2e     # Playwright (یک بار: npx playwright install chromium)
-npm run infra:down   # توقف سرویس‌ها؛ داده در volume می‌ماند
+Copy-Item .env.example .env.local
+npm run infra:up
+npm run db:migrate
+npm run dev
 ```
 
-پورت‌های محلی 55432 (DB)، 56379 (Redis) و 58333 (S3) هستند تا با پروژه‌های دیگر روی همان سیستم تداخل نکنند. صفحه‌های نمونهٔ طراحی در `/sample` و `/sample/forms` هستند.
+Open [localhost:3000](http://localhost:3000). Test activation emails are available in [Mailpit](http://127.0.0.1:58025). To load sample data, run `npm run db:seed` in another terminal. Keep `.env.local` on your machine and use local development values.
 
-## تعریف تحویل
+## Tests and contributions
 
-«پایلوت» یک مرحلهٔ اجرایی با دامنهٔ P1 است. «محصول کامل درخواستی» شامل P1 و P2 است. P3 پیشنهادهای توسعهٔ پیشرفتهٔ گفت‌وگوی قبلی است و برآورد مستقل دارد. انتقال قابلیت بین مراحل تنها با ثبت تصمیم کارفرما انجام شود.
+- `npm run check` runs type checking, linting, unit tests, and the production build.
+- `npm run test:db` runs database tests against the local services.
+- `npm run test:e2e` runs Playwright tests. Run `npx playwright install chromium` once to install the test browser.
+
+Use [GitHub Issues](https://github.com/ss-sami-ss/CatBuzz/issues) to report bugs or suggest changes. Include steps to reproduce a bug or explain who would benefit from a proposed change. Keep exact cat locations and personal contact details out of issue reports.
+
+## Documentation
+
+- [Project goals](docs/01-BRD.md) and [product requirements](docs/02-PRD.md)
+- [Architecture](docs/05-ARCHITECTURE.md), [data model](docs/06-DATA-MODEL.md), and [API contracts](docs/07-API-CONTRACTS.md)
+- [Security and access](docs/09-SECURITY-AND-ACCESS.md) and [development and operations](docs/13-DEVOPS.md)
+- [Decisions and risks](docs/03-DECISIONS-AND-RISKS.md), [task list](TASKS.md), and [changelog](CHANGELOG.md)
