@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IsoDateTime, PageQuery, PrivatePoint, PublicArea, Uuid } from "./common";
+import { IsoDateTime, PageQuery, PrivatePoint, PublicArea, Uuid, Version } from "./common";
 
 /** Needs shown on public cat summaries (docs/04 home filters). */
 export const CatNeed = z.enum(["urgent", "medical", "food_water", "adoption"]).meta({ id: "CatNeed" });
@@ -25,6 +25,7 @@ export const PublicCatSummary = z
 export const CatListQuery = PageQuery.extend({
   needs: z
     .string()
+    .max(128)
     .transform((v) => v.split(",").filter(Boolean))
     .pipe(z.array(CatNeed))
     .optional(),
@@ -47,3 +48,28 @@ export const CreateCatRequest = z
 
 export type CatNeed = z.infer<typeof CatNeed>;
 export type PublicCatSummary = z.infer<typeof PublicCatSummary>;
+
+export const CreateSightingRequest = z.strictObject({
+  observedAt: IsoDateTime,
+  location: PrivatePoint,
+  precision: z.enum(["exact", "approximate"]),
+  note: z.string().trim().max(500).optional(),
+}).meta({ id: "CreateSightingRequest" });
+
+export const UpdateCatRequest = z.strictObject({
+  version: Version,
+  name: z.string().trim().min(1).max(40).nullable().optional(),
+  sex: CreateCatRequest.shape.sex.unwrap().optional(),
+  ageEstimate: CreateCatRequest.shape.ageEstimate.unwrap().optional(),
+  markings: z.string().trim().max(200).nullable().optional(),
+}).refine(({ name, sex, ageEstimate, markings }) => [name, sex, ageEstimate, markings].some((value) => value !== undefined))
+  .meta({ id: "UpdateCatRequest" });
+
+export const PublicCatDetail = PublicCatSummary.extend({
+  sex: CreateCatRequest.shape.sex.unwrap(),
+  ageEstimate: CreateCatRequest.shape.ageEstimate.unwrap(),
+  markings: z.string().nullable(),
+  version: Version,
+}).meta({ id: "PublicCatDetail" });
+
+export const SightingReceipt = z.object({ id: Uuid }).meta({ id: "SightingReceipt" });

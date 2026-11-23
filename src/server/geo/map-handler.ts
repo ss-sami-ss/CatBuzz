@@ -50,7 +50,7 @@ async function readPublicMap(db: Db, { bbox, zoom, needs }: Query): Promise<z.ou
       select candidate.cluster_id as cell_id, count(*)::integer as count, min(cat.id::text)::uuid as cat_id
       from candidates candidate
       join cats cat on cat.public_cell_id = candidate.cell_id
-      where cat.custody = 'street' and cat.lifecycle = 'active' and cat.last_seen_at is not null
+      where cat.custody = 'street' and cat.lifecycle = 'active' and cat.last_seen_at is not null and cat.archived_at is null
         ${needsFilter}
       group by candidate.cluster_id
       order by candidate.cluster_id

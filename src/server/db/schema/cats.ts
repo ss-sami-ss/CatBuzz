@@ -19,6 +19,7 @@ export const cats = pgTable(
     ownerUserId: uuid().references(() => users.id),
     canonicalCatId: uuid().references((): AnyPgColumn => cats.id),
     needs: catNeed().array().notNull().default(sql`'{}'::cat_need[]`),
+    archivedAt: tstz(),
     publicCellId: text(),
     publicAreaLabel: text(),
     lastSeenAt: tstz(),
@@ -109,6 +110,7 @@ export const namePollVotes = pgTable(
 export const colonies = pgTable("colonies", {
   id: id(),
   name: text().notNull(),
+  archivedAt: tstz(),
   publicCellId: text(),
   publicAreaLabel: text(),
   location: privatePoint(),

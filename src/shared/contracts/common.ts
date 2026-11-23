@@ -69,3 +69,4 @@ export const Zoom = z.coerce.number().int().min(3).max(20);
 
 /** Optimistic concurrency token sent back on edits (docs/06 version). */
 export const Version = z.int().min(0);
+export const ArchiveRequest = z.strictObject({ version: Version }).meta({ id: "ArchiveRequest" });

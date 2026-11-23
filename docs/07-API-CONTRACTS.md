@@ -36,12 +36,14 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET /map | عمومی؛ bbox حداکثر ۲ درجه در هر محور، zoom از ۳ تا ۲۰، needs با ویرگول (حداقل یک نیاز مشترک)؛ خروجی PublicMapItem با حداکثر ۵۰۰ نتیجه و no-store |
 | GET /cats | cursor و فیلتر؛ PublicCatSummary |
 | POST /cats | حساب فعال، نام اختیاری، ویژگی، mediaIds و observation |
-| GET/PATCH /cats/{id} | خواندن عمومی پالایش‌شده؛ ویرایش با policy و version |
+| GET/PATCH/DELETE /cats/{id} | پروندهٔ عمومی گربهٔ خیابانی فعال؛ ویرایش یا بایگانی با version توسط ثبت‌کننده |
 | POST /cats/{id}/sightings | observedAt، location، precision؛ محدودیت زمان/مکان معتبر |
 | GET /cats/{id}/access/location | دسترسی دقیق با assignment یا grant فعال، audit و no-store |
 | POST /cats/{id}/merge-requests | candidateId و reason؛ ادغام فقط ناظر مجاز |
-| GET/POST /colonies | فهرست عمومی و ایجاد مجاز |
-| POST /colonies/{id}/memberships | cat، from؛ بررسی نقش مراقب و نسخه |
+| GET/POST /colonies | فهرست عمومی صفحه‌بندی‌شده و ایجاد توسط حساب فعال |
+| GET/PATCH/DELETE /colonies/{id} | خواندن تقریبی، ویرایش نسخه‌دار توسط ثبت‌کننده یا مراقب فعال، بایگانی فقط توسط ثبت‌کننده |
+| POST /colonies/{id}/memberships | catId، action، at و version؛ شروع با اختیار کلونی و ثبت‌کنندهٔ گربه، پایان با اختیار کلونی؛ تاریخچه حفظ می‌شود |
+| POST /colonies/{id}/caretakers | userId، action و version؛ فقط ثبت‌کنندهٔ کلونی، با سابقهٔ ممیزی |
 | GET/POST /help-requests | نوع، فوریت، target و evidence |
 | POST /help-requests/{id}/triage | ناظر/دامپزشک مجاز، urgency و assignment؛ audit |
 | GET/POST /missions | فیلتر/ایجاد طبق policy |

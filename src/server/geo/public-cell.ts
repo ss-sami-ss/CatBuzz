@@ -5,8 +5,8 @@
 export const PUBLIC_CELL_DEG = 0.01;
 
 export function publicCellId(lng: number, lat: number): string {
-  const x = Math.floor(lng / PUBLIC_CELL_DEG);
-  const y = Math.floor(lat / PUBLIC_CELL_DEG);
+  const x = Math.min(Math.floor(lng / PUBLIC_CELL_DEG), 17_999);
+  const y = Math.min(Math.floor(lat / PUBLIC_CELL_DEG), 8_999);
   return `g${PUBLIC_CELL_DEG}:${x}:${y}`;
 }
 

@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { AuthChallengeRequest, AuthChallengeResponse, AuthVerifyRequest } from "@/shared/contracts/auth";
 import { CaregiverListQuery, PublicCaregiverSummary } from "@/shared/contracts/caregivers";
-import { CatListQuery, CreateCatRequest, PublicCatSummary } from "@/shared/contracts/cats";
+import { CatListQuery, CreateCatRequest, CreateSightingRequest, PublicCatDetail, PublicCatSummary, SightingReceipt, UpdateCatRequest } from "@/shared/contracts/cats";
+import { ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, PublicColony, UpdateColonyRequest } from "@/shared/contracts/colonies";
+import { ArchiveRequest, PageQuery } from "@/shared/contracts/common";
 import { ErrorEnvelope } from "@/shared/contracts/errors";
 import { MapQuery, PublicMapItem } from "@/shared/contracts/map";
 import { CreatePlacementRequest, PlacementDecisionRequest } from "@/shared/contracts/placements";
@@ -22,11 +24,11 @@ function toSchema(schema: z.ZodType, io: "input" | "output"): JsonSchema {
   return json;
 }
 
-const REQUESTS = { CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
-const RESPONSES = { AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
+const REQUESTS = { ArchiveRequest, UpdateCatRequest, CreateSightingRequest, ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, UpdateColonyRequest, CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
+const RESPONSES = { PublicCatDetail, PublicColony, SightingReceipt, AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
 
 type Operation = {
-  method: "get" | "post" | "put" | "patch";
+  method: "get" | "post" | "put" | "patch" | "delete";
   path: string;
   summary: string;
   task: string;
@@ -50,7 +52,18 @@ const OPERATIONS: Operation[] = [
   { method: "post", path: "/credentials/{id}/review", summary: "ثبت تصمیم بازبین صلاحیت", task: "T09", auth: true, body: "CredentialReviewRequest", success: { status: 200, data: "CredentialStatusDto" }, errors: [400, 401, 403, 404, 409, 422] },
   { method: "get", path: "/map", summary: "نشانگرهای عمومی نقشه", task: "T11", auth: false, query: MapQuery, success: { status: 200, data: "PublicMapItem", list: true }, errors: [422] },
   { method: "get", path: "/cats", summary: "فهرست عمومی گربه‌ها", task: "T12", auth: false, query: CatListQuery, success: { status: 200, data: "PublicCatSummary", list: true }, errors: [422] },
-  { method: "post", path: "/cats", summary: "ثبت گربه", task: "T12", auth: true, body: "CreateCatRequest", success: { status: 201, data: "PublicCatSummary" }, errors: [401, 403, 422] },
+  { method: "post", path: "/cats", summary: "ثبت گربه", task: "T12", auth: true, body: "CreateCatRequest", success: { status: 201, data: "PublicCatDetail" }, errors: [401, 403, 422] },
+  { method: "get", path: "/cats/{id}", summary: "پروندهٔ عمومی گربه", task: "T12", auth: false, success: { status: 200, data: "PublicCatDetail" }, errors: [404] },
+  { method: "patch", path: "/cats/{id}", summary: "ویرایش نسخه‌دار گربه", task: "T12", auth: true, body: "UpdateCatRequest", success: { status: 200, data: "PublicCatDetail" }, errors: [401, 403, 404, 409, 422] },
+  { method: "delete", path: "/cats/{id}", summary: "بایگانی گربه", task: "T12", auth: true, body: "ArchiveRequest", success: { status: 204 }, errors: [401, 403, 404, 409, 422] },
+  { method: "post", path: "/cats/{id}/sightings", summary: "ثبت مشاهدهٔ خصوصی", task: "T12", auth: true, body: "CreateSightingRequest", success: { status: 201, data: "SightingReceipt" }, errors: [401, 403, 404, 422] },
+  { method: "get", path: "/colonies", summary: "فهرست عمومی کلونی‌ها", task: "T12", auth: false, query: PageQuery, success: { status: 200, data: "PublicColony", list: true }, errors: [422] },
+  { method: "post", path: "/colonies", summary: "ایجاد کلونی", task: "T12", auth: true, body: "CreateColonyRequest", success: { status: 201, data: "PublicColony" }, errors: [401, 403, 422] },
+  { method: "get", path: "/colonies/{id}", summary: "کلونی عمومی", task: "T12", auth: false, success: { status: 200, data: "PublicColony" }, errors: [404] },
+  { method: "patch", path: "/colonies/{id}", summary: "ویرایش نسخه‌دار کلونی", task: "T12", auth: true, body: "UpdateColonyRequest", success: { status: 200, data: "PublicColony" }, errors: [401, 403, 404, 409, 422] },
+  { method: "delete", path: "/colonies/{id}", summary: "بایگانی کلونی", task: "T12", auth: true, body: "ArchiveRequest", success: { status: 204 }, errors: [401, 403, 404, 409, 422] },
+  { method: "post", path: "/colonies/{id}/memberships", summary: "ثبت شروع یا پایان عضویت گربه", task: "T12", auth: true, body: "ChangeMembershipRequest", success: { status: 200, data: "PublicColony" }, errors: [401, 403, 404, 409, 422] },
+  { method: "post", path: "/colonies/{id}/caretakers", summary: "تعیین یا لغو مراقب کلونی", task: "T12", auth: true, body: "ChangeCaretakerRequest", success: { status: 200, data: "PublicColony" }, errors: [401, 403, 404, 409, 422] },
   { method: "get", path: "/caregivers", summary: "جست‌وجوی نگهدارنده", task: "T28", auth: false, query: CaregiverListQuery, success: { status: 200, data: "PublicCaregiverSummary", list: true }, errors: [422] },
   { method: "post", path: "/placement-requests", summary: "درخواست نگهداری", task: "T28", auth: true, body: "CreatePlacementRequest", idempotent: true, success: { status: 201 }, errors: [401, 403, 409, 422] },
   { method: "post", path: "/placement-requests/{id}/decision", summary: "پذیرش یا رد درخواست", task: "T28", auth: true, body: "PlacementDecisionRequest", idempotent: true, success: { status: 200 }, errors: [401, 403, 404, 409, 422] },

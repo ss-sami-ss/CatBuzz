@@ -1,5 +1,8 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createCatHandlers } from "@/server/cats/handlers";
+import { ApiError } from "@/server/http/api-error";
+import { decodeCursor } from "@/server/http/cursor";
 import { PublicMapItem } from "@/shared/contracts/map";
 import { createMapHandler } from "@/server/geo/map-handler";
 import { createDb } from "@/server/db/client";
@@ -247,5 +250,101 @@ describe("public map (Q02)", () => {
     expect((await map("2,3,5,6")).status).toBe(422);
     expect((await map(",0,1,1")).status).toBe(422);
     expect((await map("2,3,2.1,3.1", 21)).status).toBe(422);
+  });
+});
+
+describe("cat and colony lifecycle", () => {
+  const now = new Date("2026-11-19T12:00:00Z");
+  const handle = createCatHandlers({
+    db: () => db,
+    now: () => now,
+    secret: () => "test-only-cursor-secret",
+    session: (request) => {
+      const id = request.headers.get("x-test-actor");
+      if (!id) throw new ApiError("UNAUTHENTICATED");
+      return Promise.resolve({ sessionId: id, userId: id, status: "active" });
+    },
+  });
+  const request = (method = "GET", body?: object, actor?: string) => new Request("http://localhost/api/v1/test", {
+    method,
+    ...(actor && { headers: { "x-test-actor": actor } }),
+    ...(body && { body: JSON.stringify(body) }),
+  });
+  const params = (id: string) => ({ params: Promise.resolve({ id }) });
+  const observation = (observedAt: string, lng: number) => ({ observedAt, location: { lng, lat: 9.0042 }, precision: "exact" });
+
+  it("creates an unknown cat with multiple ready images, preserves observations and enforces write permissions", async () => {
+    const creator = await newUser("sample_cat_creator");
+    const visitor = await newUser("sample_cat_visitor");
+    const files = await db.insert(s.media).values(["one", "two"].map((name) => ({
+      ownerId: creator, storageKey: "test/cat/" + name, mime: "image/jpeg", sizeBytes: 45, status: "ready" as const,
+    }))).returning({ id: s.media.id });
+    const first = observation("2026-11-17T11:23:45Z", 8.0031);
+    expect((await handle.create(request("POST", { observation: first }))).status).toBe(401);
+    expect((await handle.create(request("POST", { observation: first, mediaIds: [files[0]!.id] }, visitor))).status).toBe(422);
+    const created = await handle.create(request("POST", { observation: first, mediaIds: files.map(({ id }) => id) }, creator));
+    expect(created.status).toBe(201);
+    const { data } = await created.json();
+    expect(data).toMatchObject({ sex: "unknown", ageEstimate: "unknown", version: 0, thumbnailUrl: null, lastSeenAt: "2026-11-17T00:00:00Z" });
+    expect(JSON.stringify(data)).not.toContain("8.0031");
+    const catId = data.id as string;
+    expect(await db.select().from(s.catMedia).where(eq(s.catMedia.catId, catId))).toHaveLength(2);
+    expect((await handle.update(request("PATCH", { version: 0, name: "نام نمونه" }, visitor), params(catId))).status).toBe(403);
+    expect((await handle.update(request("PATCH", { version: 0, name: "نام نمونه" }, creator), params(catId))).status).toBe(200);
+    expect((await handle.update(request("PATCH", { version: 0, name: "نام قدیمی" }, creator), params(catId))).status).toBe(409);
+
+    const newObservation = observation("2026-11-18T12:34:56Z", 8.0274);
+    const oldObservation = observation("2026-11-16T12:00:00Z", 8.04);
+    const sightings = await Promise.all([newObservation, oldObservation].map((item) => handle.observe(request("POST", item, visitor), params(catId))));
+    expect(sightings.map(({ status }) => status)).toEqual([201, 201]);
+    const { data: latest } = await (await handle.get(request(), params(catId))).json();
+    expect(latest).toMatchObject({ name: "نام نمونه", lastSeenAt: "2026-11-18T00:00:00Z", publicArea: { cellId: "g0.01:802:900" } });
+    expect(await db.select().from(s.sightings).where(eq(s.sightings.catId, catId))).toHaveLength(3);
+
+    const list = await handle.list(new Request("http://localhost/api/v1/cats?limit=1"));
+    const { meta } = await list.json();
+    if (meta.nextCursor) {
+      expect(decodeCursor(meta.nextCursor, "test-only-cursor-secret").sortKey).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect((await handle.list(new Request("http://localhost/api/v1/cats?limit=1&cursor=" + meta.nextCursor))).status).toBe(200);
+    }
+    expect((await handle.archive(request("DELETE", { version: latest.version }, creator), params(catId))).status).toBe(204);
+    expect((await handle.get(request(), params(catId))).status).toBe(404);
+    expect((await handle.observe(request("POST", newObservation, visitor), params(catId))).status).toBe(404);
+    const map = await createMapHandler(() => db)(new Request("http://localhost/api/v1/map?bbox=8,9,8.1,9.1&zoom=15"));
+    expect((await map.json()).data).toEqual([]);
+  });
+
+  it("tracks past membership and logs removed caretakers without exposing either publicly", async () => {
+    const owner = await newUser("sample_colony_owner");
+    const caretaker = await newUser("sample_colony_caretaker");
+    const colony = await handle.createColony(request("POST", { name: "کلونی نمونه", location: { lng: 8.0031, lat: 9.0042 } }, owner));
+    expect(colony.status).toBe(201);
+    const { data: created } = await colony.json();
+    const colonyId = created.id as string;
+    const [cat] = await db.insert(s.cats).values({ createdBy: owner, publicCellId: "g0.01:800:900", lastSeenAt: now }).returning({ id: s.cats.id });
+    const assign = (action: "assign" | "remove", version: number, actor = owner) =>
+      handle.changeCaretaker(request("POST", { userId: caretaker, action, version }, actor), params(colonyId));
+    const membership = (action: "join" | "leave", at: string, version: number) =>
+      handle.changeMembership(request("POST", { catId: cat!.id, action, at, version }, owner), params(colonyId));
+
+    expect((await assign("assign", 0, caretaker)).status).toBe(403);
+    expect((await assign("assign", 0)).status).toBe(200);
+    expect((await membership("join", "2026-11-16T00:00:00Z", 1)).status).toBe(200);
+    expect((await membership("join", "2026-11-17T00:00:00Z", 2)).status).toBe(409);
+    expect((await membership("leave", "2026-11-18T00:00:00Z", 2)).status).toBe(200);
+    expect((await membership("join", "2026-11-18T00:00:00Z", 3)).status).toBe(200);
+    expect((await assign("remove", 4)).status).toBe(200);
+    expect((await handle.updateColony(request("PATCH", { name: "نام تازه", version: 5 }, caretaker), params(colonyId))).status).toBe(403);
+    const history = await db.select().from(s.colonyMemberships).where(eq(s.colonyMemberships.colonyId, colonyId));
+    expect(history).toHaveLength(2);
+    expect(history.some((row) => row.validTo?.toISOString() === "2026-11-18T00:00:00.000Z")).toBe(true);
+    const audit = await db.select().from(s.auditLogs).where(eq(s.auditLogs.resourceId, colonyId));
+    expect(audit).toHaveLength(3);
+    expect(audit).toEqual(expect.arrayContaining([expect.objectContaining({ action: "colony.caretaker.remove", changes: { userId: caretaker, since: now.toISOString() } })]));
+    const detail = await handle.getColony(request(), params(colonyId));
+    expect(await detail.json()).toMatchObject({ data: { name: "کلونی نمونه", version: 5 } });
+    expect(Object.keys(created).sort()).toEqual(["id", "name", "publicArea", "version"]);
+    expect((await handle.archiveColony(request("DELETE", { version: 5 }, owner), params(colonyId))).status).toBe(204);
+    expect((await handle.getColony(request(), params(colonyId))).status).toBe(404);
   });
 });

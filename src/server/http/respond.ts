@@ -95,7 +95,8 @@ export function withApi<P = Record<string, never>>(handler: Handler<P>) {
       return await handler(request, { ...ctx, params });
     } catch (error) {
       if (error instanceof ApiError) return errorResponse(ctx, error);
-      console.error(`[api] ${ctx.requestId}`, error);
+      // Driver errors can contain private query parameters. Keep the request ID and error class only.
+      console.error(`[api] ${ctx.requestId}`, error instanceof Error ? error.constructor.name : "UnknownError");
       return errorResponse(ctx, new ApiError("INTERNAL", { message: API_ERRORS.INTERNAL.message }));
     }
   };
