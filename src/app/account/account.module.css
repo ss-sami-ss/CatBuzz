@@ -1,0 +1,55 @@
+.page {
+  max-inline-size: 42rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 5vw, 3rem);
+}
+
+.page a {
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+}
+
+.stack, .panel, .choice {
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: clamp(1rem, 4vw, 1.5rem);
+}
+
+.panel h2, .panel p, .stack > p {
+  margin: 0;
+}
+
+.choice select {
+  min-block-size: 44px;
+  font: inherit;
+  color: inherit;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: .5rem;
+  padding-inline: .75rem;
+}
+
+.options {
+  min-inline-size: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.error {
+  font-weight: 600;
+}

@@ -61,6 +61,8 @@ export async function getCapabilities(db: Db, userId: string): Promise<Capabilit
 /** Replaces the whole set; keeps rows (and their capacity/area) for capabilities that stay. */
 export async function setCapabilities(db: Db, userId: string, next: Capability[]): Promise<Capability[]> {
   await db.transaction(async (tx) => {
+    // Serialize replacements for this account, including when it has no capability rows.
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).for("update");
     const current = new Set(
       (await tx.select({ capability: volunteerCapabilities.capability }).from(volunteerCapabilities).where(eq(volunteerCapabilities.userId, userId))).map(
         (row) => row.capability as Capability,
