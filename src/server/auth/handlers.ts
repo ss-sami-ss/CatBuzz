@@ -8,6 +8,7 @@ import { ApiError } from "../http/api-error";
 import { noContent, ok, parseJson, withApi } from "../http/respond";
 import { getRedis } from "../redis";
 import { createChallenge, loadMe, resolveSession, revokeSessions, verifyChallenge, type AuthDeps, type SessionUser } from "./auth-service";
+import { listOwnCredentials } from "./access-policy";
 import { clearedSessionCookie, clientIp, readSessionToken, sessionCookie } from "./session-cookie";
 
 export type AuthHandlerDeps = AuthDeps & { secureCookies: boolean };
@@ -50,8 +51,14 @@ export function createAuthHandlers(deps: AuthHandlerDeps) {
       return ok(ctx, me);
     }),
 
+    getCredentials: withApi(async (request, ctx) => {
+      const session = await requireSession(request);
+      return ok(ctx, await listOwnCredentials(deps.db, session.userId, deps.now()));
+    }),
+
     updateMe: withApi(async (request, ctx) => {
       const session = await requireSession(request);
+      if (session.status !== "active") throw new ApiError("FORBIDDEN");
       const input = await parseJson(request, UpdateMeRequest);
       return ok(ctx, await updateMe(deps.db, session.userId, input));
     }),
@@ -63,6 +70,7 @@ export function createAuthHandlers(deps: AuthHandlerDeps) {
 
     putCapabilities: withApi(async (request, ctx) => {
       const session = await requireSession(request);
+      if (session.status !== "active") throw new ApiError("FORBIDDEN");
       const input = await parseJson(request, PutCapabilitiesRequest);
       return ok(ctx, { capabilities: await setCapabilities(deps.db, session.userId, input.capabilities) });
     }),

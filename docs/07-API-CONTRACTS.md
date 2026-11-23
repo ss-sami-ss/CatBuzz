@@ -30,6 +30,7 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | POST /auth/challenges | contact، purpose؛ محدودیت نرخ، پیام بدون افشای وجود حساب |
 | POST /auth/verify | challengeId و code؛ یک‌بارمصرف و منقضی‌شونده |
 | GET/PATCH /me | پروفایل خود، فیلدهای خصوصی فقط خود فرد |
+| GET /me/credentials | وضعیت صلاحیت‌های خود با شناسه، حرفه، وضعیت و تاریخ انقضا؛ پاسخ خصوصی با no-store و بدون مدرک یا شناسهٔ بازبین |
 | PUT /me/capabilities | فهرست توانمندی و محدوده؛ صلاحیت vet از این مسیر فعال نشود |
 | GET /map | bbox، zoom، filters؛ فقط PublicMapItem و cluster |
 | GET /cats | cursor و فیلتر؛ PublicCatSummary |

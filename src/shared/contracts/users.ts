@@ -47,3 +47,12 @@ export const PutCapabilitiesRequest = z
 
 export type Capability = z.infer<typeof Capability>;
 export type MeDto = z.infer<typeof MeDto>;
+
+export const CredentialStatusDto = z
+  .object({
+    id: Uuid,
+    profession: z.enum(["veterinarian", "vet_technician", "counselor"]),
+    status: z.enum(["pending", "verified", "rejected", "expired", "revoked"]),
+    expiresAt: z.iso.datetime({ offset: true }).nullable(),
+  })
+  .meta({ id: "CredentialStatusDto" });

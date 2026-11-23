@@ -1,9 +1,10 @@
 import { eq } from "drizzle-orm";
 import { Redis } from "ioredis";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { requireGroupRole, requireProfessionalCredential } from "@/server/auth/access-policy";
 import { createAuthHandlers } from "@/server/auth/handlers";
 import { createDb } from "@/server/db/client";
-import { authChallenges, sessions, users } from "@/server/db/schema";
+import { authChallenges, groupMemberships, groups, professionalCredentials, sessions, users } from "@/server/db/schema";
 import type { EmailMessage, EmailSender } from "@/server/email/email-sender";
 import { resetTestDb, TEST_REDIS_URL, TEST_URL } from "./test-env";
 
@@ -187,5 +188,69 @@ describe("sessions", () => {
     await db.update(users).set({ status: "suspended" }).where(eq(users.id, me.data.id));
     expect(row).toBeDefined();
     expect((await get(auth.me, cookie)).status).toBe(401);
+  });
+});
+
+describe("access policy (Q25)", () => {
+  async function activeAccount() {
+    const { body } = await startChallenge(`policy-${crypto.randomUUID()}@example.test`);
+    const response = await post(auth.verify, { challengeId: body.data.challengeId, code: lastCode() });
+    expect(response.status).toBe(200);
+    return { userId: (await response.json()).data.id as string, cookie: cookieFrom(response) };
+  }
+
+  it("rechecks group scope, role and active membership while the same session remains valid", async () => {
+    const { userId, cookie } = await activeAccount();
+    const [group, otherGroup] = await db.insert(groups).values([
+      { name: "گروه نمونه", scope: "public", createdBy: userId },
+      { name: "گروه دیگر نمونه", scope: "public", createdBy: userId },
+    ]).returning({ id: groups.id });
+    const [membership] = await db.insert(groupMemberships).values({
+      groupId: group!.id, userId, role: "admin", status: "active",
+    }).returning({ id: groupMemberships.id });
+
+    await expect(requireGroupRole(db, userId, group!.id, ["admin"])).resolves.toBeUndefined();
+    await expect(requireGroupRole(db, userId, otherGroup!.id, ["admin"])).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await db.update(groupMemberships).set({ role: "member" }).where(eq(groupMemberships.id, membership!.id));
+    await expect(requireGroupRole(db, userId, group!.id, ["admin"])).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(requireGroupRole(db, userId, group!.id, ["member"])).resolves.toBeUndefined();
+    await db.update(groupMemberships).set({ status: "removed" }).where(eq(groupMemberships.id, membership!.id));
+    await expect(requireGroupRole(db, userId, group!.id, ["member"])).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect((await auth.me(new Request(`${ORIGIN}/api/v1/me`, { headers: { cookie } }))).status).toBe(200);
+  });
+
+  it("returns only the owner's credential status and denies expired and revoked credentials", async () => {
+    const actor = await activeAccount();
+    const reviewer = await activeAccount();
+    const evidenceMediaId = crypto.randomUUID();
+    const [credential] = await db.insert(professionalCredentials).values({
+      userId: actor.userId,
+      profession: "veterinarian",
+      status: "verified",
+      evidenceMediaId,
+      verifiedBy: reviewer.userId,
+      verifiedAt: clock,
+      expiresAt: new Date(clock.getTime() + 60_000),
+    }).returning({ id: professionalCredentials.id });
+    expect((await auth.getCredentials(new Request(`${ORIGIN}/api/v1/me/credentials`))).status).toBe(401);
+    const own = await auth.getCredentials(new Request(`${ORIGIN}/api/v1/me/credentials`, { headers: { cookie: actor.cookie } }));
+    expect(own.headers.get("cache-control")).toBe("no-store");
+    expect((await own.json()).data).toEqual([{
+      id: credential!.id,
+      profession: "veterinarian",
+      status: "verified",
+      expiresAt: new Date(clock.getTime() + 60_000).toISOString(),
+    }]);
+    const other = await auth.getCredentials(new Request(`${ORIGIN}/api/v1/me/credentials`, { headers: { cookie: reviewer.cookie } }));
+    expect((await other.json()).data).toEqual([]);
+    await expect(requireProfessionalCredential(db, actor.userId, "counselor", clock)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(requireProfessionalCredential(db, actor.userId, "veterinarian", clock)).resolves.toBe(credential!.id);
+    clock = new Date(clock.getTime() + 60_000);
+    await expect(requireProfessionalCredential(db, actor.userId, "veterinarian", clock)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const expired = await auth.getCredentials(new Request(`${ORIGIN}/api/v1/me/credentials`, { headers: { cookie: actor.cookie } }));
+    expect((await expired.json()).data[0].status).toBe("expired");
+
+    await db.update(professionalCredentials).set({ status: "revoked", expiresAt: null }).where(eq(professionalCredentials.id, credential!.id));
+    await expect(requireProfessionalCredential(db, actor.userId, "veterinarian", clock)).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
