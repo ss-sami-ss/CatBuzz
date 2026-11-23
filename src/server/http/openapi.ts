@@ -5,7 +5,7 @@ import { CatListQuery, CreateCatRequest, PublicCatSummary } from "@/shared/contr
 import { ErrorEnvelope } from "@/shared/contracts/errors";
 import { MapQuery, PublicMapItem } from "@/shared/contracts/map";
 import { CreatePlacementRequest, PlacementDecisionRequest } from "@/shared/contracts/placements";
-import { CapabilitiesDto, CredentialStatusDto, MeDto, PublicUserSummary, PutCapabilitiesRequest, UpdateMeRequest } from "@/shared/contracts/users";
+import { CapabilitiesDto, CredentialReviewRequest, CredentialStatusDto, MeDto, PublicUserSummary, PutCapabilitiesRequest, UpdateMeRequest } from "@/shared/contracts/users";
 
 /**
  * OpenAPI 3.1 document generated from the runtime zod contracts (T06), so the document and
@@ -22,7 +22,7 @@ function toSchema(schema: z.ZodType, io: "input" | "output"): JsonSchema {
   return json;
 }
 
-const REQUESTS = { AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
+const REQUESTS = { CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
 const RESPONSES = { AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
 
 type Operation = {
@@ -47,6 +47,7 @@ const OPERATIONS: Operation[] = [
   { method: "get", path: "/me/capabilities", summary: "توانمندی‌های خود", task: "T08", auth: true, success: { status: 200, data: "CapabilitiesDto" }, errors: [401] },
   { method: "put", path: "/me/capabilities", summary: "تعیین توانمندی‌ها (صلاحیت دامپزشکی از این مسیر نیست)", task: "T08", auth: true, body: "PutCapabilitiesRequest", success: { status: 200, data: "CapabilitiesDto" }, errors: [401, 403, 422] },
   { method: "get", path: "/me/credentials", summary: "وضعیت صلاحیت‌های حرفه‌ای خود", task: "T09", auth: true, success: { status: 200, data: "CredentialStatusDto", list: true }, errors: [401] },
+  { method: "post", path: "/credentials/{id}/review", summary: "ثبت تصمیم بازبین صلاحیت", task: "T09", auth: true, body: "CredentialReviewRequest", success: { status: 200, data: "CredentialStatusDto" }, errors: [400, 401, 403, 404, 409, 422] },
   { method: "get", path: "/map", summary: "نشانگرهای عمومی نقشه", task: "T11", auth: false, query: MapQuery, success: { status: 200, data: "PublicMapItem", list: true }, errors: [422] },
   { method: "get", path: "/cats", summary: "فهرست عمومی گربه‌ها", task: "T12", auth: false, query: CatListQuery, success: { status: 200, data: "PublicCatSummary", list: true }, errors: [422] },
   { method: "post", path: "/cats", summary: "ثبت گربه", task: "T12", auth: true, body: "CreateCatRequest", success: { status: 201, data: "PublicCatSummary" }, errors: [401, 403, 422] },

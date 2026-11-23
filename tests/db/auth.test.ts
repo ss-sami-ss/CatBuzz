@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { requireGroupRole, requireProfessionalCredential } from "@/server/auth/access-policy";
 import { createAuthHandlers } from "@/server/auth/handlers";
 import { createDb } from "@/server/db/client";
-import { authChallenges, groupMemberships, groups, professionalCredentials, sessions, users } from "@/server/db/schema";
+import { auditLogs, authChallenges, groupMemberships, groups, media, professionalCredentials, sessions, users } from "@/server/db/schema";
 import type { EmailMessage, EmailSender } from "@/server/email/email-sender";
 import { resetTestDb, TEST_REDIS_URL, TEST_URL } from "./test-env";
 
@@ -252,5 +252,61 @@ describe("access policy (Q25)", () => {
 
     await db.update(professionalCredentials).set({ status: "revoked", expiresAt: null }).where(eq(professionalCredentials.id, credential!.id));
     await expect(requireProfessionalCredential(db, actor.userId, "veterinarian", clock)).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("limits decisions to delegated reviewers, prevents self-review and audits changes once", async () => {
+    const owner = await activeAccount();
+    const reviewer = await activeAccount();
+    const [evidence] = await db.insert(media).values({
+      ownerId: owner.userId,
+      storageKey: `test/credential/${crypto.randomUUID()}`,
+      mime: "application/pdf",
+      sizeBytes: 100,
+      status: "ready",
+      visibility: "private",
+    }).returning({ id: media.id });
+    const [credential, self, insufficient] = await db.insert(professionalCredentials).values([
+      { userId: owner.userId, profession: "veterinarian", evidenceMediaId: evidence!.id },
+      { userId: reviewer.userId, profession: "counselor" },
+      { userId: owner.userId, profession: "vet_technician" },
+    ]).returning({ id: professionalCredentials.id });
+
+    const allowed = new Set([reviewer.userId]);
+    const handlers = createAuthHandlers({ db, redis, email, secret: "test-only-auth-secret-0123456789abcdef", now: () => clock, secureCookies: false, credentialReviewerIds: allowed });
+    function decide(id: string, cookie: string, input: object) {
+      return handlers.reviewCredential(new Request(`${ORIGIN}/api/v1/credentials/${id}/review`, {
+        method: "POST",
+        headers: { origin: ORIGIN, cookie, "content-type": "application/json" },
+        body: JSON.stringify(input),
+      }), { params: Promise.resolve({ id }) });
+    }
+    const approve = { status: "verified", reason: "evidence_confirmed", expiresAt: new Date(clock.getTime() + 60_000).toISOString() };
+    expect((await decide(credential!.id, owner.cookie, approve)).status).toBe(403);
+    expect((await decide(self!.id, reviewer.cookie, approve)).status).toBe(403);
+    expect((await decide(credential!.id, reviewer.cookie, { ...approve, expiresAt: clock.toISOString() })).status).toBe(422);
+    expect((await decide(insufficient!.id, reviewer.cookie, approve)).status).toBe(409);
+    expect((await decide(insufficient!.id, reviewer.cookie, { status: "rejected", reason: "evidence_insufficient" })).status).toBe(200);
+
+    const decisions = await Promise.all([
+      decide(credential!.id, reviewer.cookie, approve),
+      decide(credential!.id, reviewer.cookie, approve),
+    ]);
+    expect(decisions.map((response) => response.status).sort()).toEqual([200, 409]);
+    await expect(requireProfessionalCredential(db, owner.userId, "veterinarian", clock)).resolves.toBe(credential!.id);
+
+    const revoke = { status: "revoked", reason: "license_revoked" };
+    allowed.delete(reviewer.userId);
+    expect((await decide(credential!.id, reviewer.cookie, revoke)).status).toBe(403);
+    allowed.add(reviewer.userId);
+    expect((await decide(credential!.id, reviewer.cookie, revoke)).status).toBe(200);
+    await expect(requireProfessionalCredential(db, owner.userId, "veterinarian", clock)).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    const audit = await db.select().from(auditLogs).where(eq(auditLogs.resourceId, credential!.id));
+    expect(audit).toHaveLength(2);
+    expect(audit.every((entry) => entry.actorId === reviewer.userId && entry.requestId)).toBe(true);
+    expect(audit.map((entry) => entry.changes)).toEqual(expect.arrayContaining([
+      { from: "pending", to: "verified", reason: "evidence_confirmed" },
+      { from: "verified", to: "revoked", reason: "license_revoked" },
+    ]));
   });
 });

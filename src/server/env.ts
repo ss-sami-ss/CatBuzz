@@ -9,6 +9,9 @@ const ServerEnv = z.object({
   AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters"),
   CURSOR_SECRET: z.string().min(32, "CURSOR_SECRET must be at least 32 characters"),
   EMAIL_SMTP_URL: z.string().optional().transform((v) => v || undefined),
+  CREDENTIAL_REVIEWER_IDS: z.string().default("").transform((value) =>
+    value.split(",").map((id) => id.trim()).filter(Boolean),
+  ).pipe(z.array(z.uuid())).transform((ids) => new Set(ids.map((id) => id.toLowerCase()))),
   EMAIL_FROM: z.string().default("CatBuzz <no-reply@catbuzz.local>"),
 });
 

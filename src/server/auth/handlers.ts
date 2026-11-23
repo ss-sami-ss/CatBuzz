@@ -1,5 +1,6 @@
 import { AuthChallengeRequest, AuthVerifyRequest } from "@/shared/contracts/auth";
-import { PutCapabilitiesRequest, UpdateMeRequest } from "@/shared/contracts/users";
+import { Uuid } from "@/shared/contracts/common";
+import { CredentialReviewRequest, PutCapabilitiesRequest, UpdateMeRequest } from "@/shared/contracts/users";
 import { getCapabilities, setCapabilities, updateMe } from "../account/account-service";
 import { getDb } from "../db/client";
 import { createSmtpSender } from "../email/email-sender";
@@ -9,9 +10,10 @@ import { noContent, ok, parseJson, withApi } from "../http/respond";
 import { getRedis } from "../redis";
 import { createChallenge, loadMe, resolveSession, revokeSessions, verifyChallenge, type AuthDeps, type SessionUser } from "./auth-service";
 import { listOwnCredentials } from "./access-policy";
+import { reviewCredential } from "./credential-review";
 import { clearedSessionCookie, clientIp, readSessionToken, sessionCookie } from "./session-cookie";
 
-export type AuthHandlerDeps = AuthDeps & { secureCookies: boolean };
+export type AuthHandlerDeps = AuthDeps & { secureCookies: boolean; credentialReviewerIds?: ReadonlySet<string> };
 
 /** Route handlers for /api/v1/auth/* and /me; deps are injected so tests use the test DB and a capturing mailer. */
 export function createAuthHandlers(deps: AuthHandlerDeps) {
@@ -56,6 +58,17 @@ export function createAuthHandlers(deps: AuthHandlerDeps) {
       return ok(ctx, await listOwnCredentials(deps.db, session.userId, deps.now()));
     }),
 
+    reviewCredential: withApi<{ id: string }>(async (request, ctx) => {
+      const session = await requireSession(request);
+      if (session.status !== "active" || !deps.credentialReviewerIds?.has(session.userId)) {
+        throw new ApiError("FORBIDDEN");
+      }
+      const id = Uuid.safeParse(ctx.params.id);
+      if (!id.success) throw new ApiError("NOT_FOUND");
+      const input = await parseJson(request, CredentialReviewRequest);
+      return ok(ctx, await reviewCredential(deps.db, session.userId, id.data, input, deps.now(), ctx.requestId));
+    }),
+
     updateMe: withApi(async (request, ctx) => {
       const session = await requireSession(request);
       if (session.status !== "active") throw new ApiError("FORBIDDEN");
@@ -92,6 +105,7 @@ export function authHandlers() {
       secret: env.AUTH_SECRET,
       now: () => new Date(),
       secureCookies: env.APP_ORIGIN.startsWith("https://"),
+      credentialReviewerIds: env.CREDENTIAL_REVIEWER_IDS,
     });
   }
   return defaultHandlers;

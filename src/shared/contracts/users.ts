@@ -56,3 +56,21 @@ export const CredentialStatusDto = z
     expiresAt: z.iso.datetime({ offset: true }).nullable(),
   })
   .meta({ id: "CredentialStatusDto" });
+
+export const CredentialReviewRequest = z.discriminatedUnion("status", [
+  z.strictObject({
+    status: z.literal("verified"),
+    reason: z.literal("evidence_confirmed"),
+    expiresAt: z.iso.datetime({ offset: true }),
+  }),
+  z.strictObject({
+    status: z.literal("rejected"),
+    reason: z.enum(["evidence_invalid", "evidence_insufficient", "identity_mismatch"]),
+  }),
+  z.strictObject({
+    status: z.literal("revoked"),
+    reason: z.enum(["evidence_invalid", "identity_mismatch", "license_revoked"]),
+  }),
+]).meta({ id: "CredentialReviewRequest" });
+
+export type CredentialReviewInput = z.infer<typeof CredentialReviewRequest>;
