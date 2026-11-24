@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { CatListQuery, CreateCatRequest, CreateSightingRequest, PublicCatSummary, UpdateCatRequest } from "@/shared/contracts/cats";
 import { IsoDateTime, Uuid } from "@/shared/contracts/common";
 import type { Db } from "../db/client";
-import { auditLogs, catMedia, catNames, cats, helpEvidence, media, sightings } from "../db/schema";
+import { auditLogs, catMedia, catNames, cats, helpEvidence, media, missionUpdates, sightings } from "../db/schema";
 import { publicCellCenter, publicCellId } from "../geo/public-cell";
 import { ApiError } from "../http/api-error";
 import { decodeCursor, encodeCursor } from "../http/cursor";
@@ -106,7 +106,9 @@ export async function createCat(db: Db, actorId: string, input: z.output<typeof 
       )).orderBy(media.id).for("update");
       const attached = await tx.select({ id: catMedia.mediaId }).from(catMedia).where(inArray(catMedia.mediaId, mediaIds)).limit(1);
       const evidence = await tx.select({ id: helpEvidence.mediaId }).from(helpEvidence).where(inArray(helpEvidence.mediaId, mediaIds)).limit(1);
-      if (evidence.length) throw new ApiError("CONFLICT", { message: "عکس پیوست‌شده به گزارش خصوصی قابل استفاده در پرونده نیست." });
+      const missionEvidence = await tx.select({ id: missionUpdates.id }).from(missionUpdates)
+        .where(sql`${missionUpdates.evidenceMediaIds} && array[${sql.join(mediaIds.map((id) => sql`${id}`), sql`, `)}]::uuid[]`).limit(1);
+      if (evidence.length || missionEvidence.length) throw new ApiError("CONFLICT", { message: "عکس پیوست‌شده به گزارش خصوصی قابل استفاده در پرونده نیست." });
       if (attached.length) throw new ApiError("CONFLICT", { message: "یکی از عکس‌ها قبلاً به پرونده‌ای متصل شده است." });
       if (files.length !== mediaIds.length) throw new ApiError("VALIDATION_FAILED", { fieldErrors: { mediaIds: ["عکس باید آماده و متعلق به حساب شما باشد."] } });
     }

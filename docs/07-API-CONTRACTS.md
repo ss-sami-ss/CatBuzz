@@ -50,9 +50,9 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET /help-requests/{id} | فقط نویسنده یا بازبین فعلی |
 | POST /help-requests/{id}/resolve | فقط مسئول مجاز همان گزارش، با نسخه و پاسخ غیرخالی |
 | GET /help-requests/{id}/evidence/{mediaId} | فقط نویسنده یا بازبین فعلی؛ JPEG پاک‌سازی‌شده، private/no-store |
-| GET/POST /missions | فیلتر/ایجاد طبق policy |
-| POST /missions/{id}/acceptances | version و role؛ Idempotency-Key، تراکنش ظرفیت |
-| POST /missions/{id}/updates | event، evidence و version؛ transition مجاز |
+| GET/POST /missions | فهرست برای حساب فعال؛ ایجاد فقط مسئول مجاز گزارش triage‌شده |
+| POST /missions/{id}/acceptances | نسخه، نقش، مهارت و ظرفیت؛ صلاحیت دامپزشکی برای vet_visit؛ Idempotency-Key با اعتبار ۲۴ ساعت |
+| POST /missions/{id}/updates | نسخه، انصراف یا ثبت نتیجهٔ شرکت‌کننده؛ تأیید پایان توسط ایجادکنندهٔ مجاز پس از ثبت نتایج |
 | GET/POST /groups | scope و visibility |
 | POST /groups/{id}/membership-requests | حساب فعال و قواعد گروه |
 | GET/POST /conversations/{id}/messages | participant فعال، cursor/clientMessageId |

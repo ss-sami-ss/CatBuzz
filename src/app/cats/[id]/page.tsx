@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Uuid } from "@/shared/contracts/common";
 import { getCat } from "@/server/cats/cat-service";
@@ -24,6 +25,7 @@ export default async function CatPage({ params }: { params: Promise<{ id: string
   return (
     <article>
       <h1>{name}</h1>
+      <Link href={"/missions/report?cat=" + cat.id}>ثبت گزارش کمک</Link>
       <p>{cat.publicArea.label} · <time dateTime={cat.lastSeenAt}>{dateFormat.format(new Date(cat.lastSeenAt))}</time></p>
       {cat.photoIds.length > 0 && (
         <div className={styles.grid}>

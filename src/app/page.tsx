@@ -10,7 +10,7 @@ export default function HomePage() {
         <Link href="/" className={styles.brand} dir="ltr"><span aria-hidden="true">✦</span>CatBuzz</Link>
         <nav aria-label="ناوبری اصلی" className={styles.nav}>
           <Link href="/cats">پروندهٔ گربه‌ها</Link>
-          <Link href="/clinics">کلینیک‌ها</Link>
+          <Link href="/clinics">کلینیک‌ها</Link><Link href="/missions">مأموریت‌ها</Link>
           <Link href="/account">حساب کاربری</Link>
         </nav>
       </header>

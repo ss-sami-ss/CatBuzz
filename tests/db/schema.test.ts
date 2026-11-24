@@ -5,6 +5,7 @@ import { createUploadHandlers } from "@/server/media/upload-handlers";
 import { getMediaStorage } from "@/server/media/storage";
 import { createDuplicateHandlers } from "@/server/cats/duplicate-handlers";
 import { getClinic, listClinics } from "@/server/clinics/directory";
+import { createMissionHandlers } from "@/server/missions/handlers";
 import { createHelpHandlers } from "@/server/help/handlers";
 import { createCareHandlers } from "@/server/care/handlers";
 import { createCatHandlers } from "@/server/cats/handlers";
@@ -575,5 +576,58 @@ describe("urgent report triage", () => {
     expect((await catHandlers.create(request(reporter, { mediaIds: [id], publishPhotos: true, observation: {
       occurredAt: now.toISOString(), observedAt: now.toISOString(), location: { lng: 4, lat: 3 }, precision: "exact",
     } }))).status).toBe(409);
+  });
+});
+
+
+describe("mission acceptance (Q06–Q08)", () => {
+  it("enforces skills, serializes the last spot, replays retries and protects the result lifecycle", async () => {
+    const owner = await newUser("sample_mission_owner");
+    const first = await newUser("sample_mission_first");
+    const other = await newUser("sample_mission_other");
+    const now = new Date("2026-11-21T12:00:00Z");
+    const handle = createMissionHandlers({ db: () => db, now: () => now, reviewer: (actor) => actor === owner,
+      session: async (request) => {
+        const id = request.headers.get("x-test-actor")!;
+        return { userId: id, sessionId: id, status: "active" };
+      },
+    });
+    const req = (actor: string, input: object, key = "sample-mission-key") => new Request("http://localhost/api/v1/test", {
+      method: "POST", headers: { "x-test-actor": actor, "idempotency-key": key }, body: JSON.stringify(input),
+    });
+    const params = (id: string) => ({ params: Promise.resolve({ id }) });
+    const [cat] = await db.insert(s.cats).values({ createdBy: owner }).returning({ id: s.cats.id });
+    const [report] = await db.insert(s.helpRequests).values({
+      catId: cat!.id, reporterId: owner, needType: "feeding", status: "triaged", triageOwnerId: owner,
+    }).returning({ id: s.helpRequests.id });
+    const input = { reportId: report!.id, type: "feeding", capacity: 1, requiredCapability: "feeding", dueAt: "2026-11-22T00:00:00Z" };
+    expect((await handle.create(req(other, input))).status).toBe(403);
+    const created = await handle.create(req(owner, input));
+    expect(created.status).toBe(201);
+    const { data: mission } = await created.json();
+    const ctx = params(mission.id);
+    const acceptance = { version: 0, role: "volunteer" };
+    expect((await handle.accept(req(first, acceptance), ctx)).status).toBe(403);
+    await db.insert(s.volunteerCapabilities).values([first, other].map((userId) => ({ userId, capability: "feeding" as const })));
+    const concurrent = await Promise.all([first, other].map((actor) => handle.accept(req(actor, acceptance), ctx)));
+    expect(concurrent.map(({ status }) => status).sort()).toEqual([201, 409]);
+    const winner = concurrent[0]!.status === 201 ? first : other;
+    const loser = winner === first ? other : first;
+    const accepted = (await concurrent.find(({ status }) => status === 201)!.json()).data;
+    const retry = await handle.accept(req(winner, acceptance), ctx);
+    expect(retry.status).toBe(201);
+    expect((await retry.json()).data).toEqual(accepted);
+    const changed = await handle.accept(req(winner, { ...acceptance, version: 1 }), ctx);
+    expect((await changed.json()).error.code).toBe("IDEMPOTENCY_KEY_REUSED");
+    expect(await db.select().from(s.assignments).where(eq(s.assignments.missionId, mission.id))).toHaveLength(1);
+    expect((await handle.update(req(loser, { version: 1, event: "withdraw" }), ctx)).status).toBe(403);
+    expect((await handle.update(req(owner, { version: 1, event: "complete" }), ctx)).status).toBe(409);
+    expect((await handle.update(req(winner, { version: 1, event: "submit_result", note: "sample result" }), ctx)).status).toBe(200);
+    const finished = await handle.update(req(owner, { version: 2, event: "complete" }), ctx);
+    expect(finished.status).toBe(200);
+    expect((await finished.json()).data).toMatchObject({ status: "completed", acceptedCount: 0 });
+    const events = await db.select().from(s.missionUpdates).where(eq(s.missionUpdates.missionId, mission.id));
+    expect(events.map(({ event }) => event)).toEqual(expect.arrayContaining(["created", "accepted", "submit_result", "complete"]));
+    expect(events).toHaveLength(4);
   });
 });

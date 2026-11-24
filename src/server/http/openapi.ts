@@ -9,6 +9,7 @@ import { ArchiveRequest, PageQuery } from "@/shared/contracts/common";
 import { MergeReceipt, MergeRequest, SimilarCat } from "@/shared/contracts/duplicates";
 import { ErrorEnvelope } from "@/shared/contracts/errors";
 import { HelpReportDto, HelpRequestInput, ResolveHelpInput, TriageInput } from "@/shared/contracts/help";
+import { AcceptanceDto, CreateMissionInput, MissionAcceptanceInput, MissionDto, MissionListItem, MissionQuery, MissionUpdateInput } from "@/shared/contracts/missions";
 import { MapQuery, PublicMapItem } from "@/shared/contracts/map";
 import { CreatePlacementRequest, PlacementDecisionRequest } from "@/shared/contracts/placements";
 import { ReadyImageDto, SignedImageDto, UploadIntentDto, UploadIntentRequest } from "@/shared/contracts/uploads";
@@ -29,8 +30,8 @@ function toSchema(schema: z.ZodType, io: "input" | "output"): JsonSchema {
   return json;
 }
 
-const REQUESTS = { HelpRequestInput, TriageInput, ResolveHelpInput, MergeRequest, CareLogRequest, ConfirmHealthRequest, HealthReportRequest, UploadIntentRequest, ArchiveRequest, UpdateCatRequest, CreateSightingRequest, ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, UpdateColonyRequest, CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
-const RESPONSES = { HelpReportDto, PublicClinic, MergeReceipt, SimilarCat, CareLogReceipt, HealthConfirmation, HealthReportReceipt, PrivateCareLog, PrivateHealthRecord, PublicHealthRecord, ReadyImageDto, SignedImageDto, UploadIntentDto, PublicCatDetail, PublicColony, SightingReceipt, AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
+const REQUESTS = { CreateMissionInput, MissionAcceptanceInput, MissionUpdateInput, HelpRequestInput, TriageInput, ResolveHelpInput, MergeRequest, CareLogRequest, ConfirmHealthRequest, HealthReportRequest, UploadIntentRequest, ArchiveRequest, UpdateCatRequest, CreateSightingRequest, ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, UpdateColonyRequest, CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
+const RESPONSES = { AcceptanceDto, MissionDto, MissionListItem, HelpReportDto, PublicClinic, MergeReceipt, SimilarCat, CareLogReceipt, HealthConfirmation, HealthReportReceipt, PrivateCareLog, PrivateHealthRecord, PublicHealthRecord, ReadyImageDto, SignedImageDto, UploadIntentDto, PublicCatDetail, PublicColony, SightingReceipt, AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
 
 type Operation = {
   method: "get" | "post" | "put" | "patch" | "delete";
@@ -94,6 +95,10 @@ const OPERATIONS: Operation[] = [
   { method: "post", path: "/help-requests/{id}/triage", summary: "تعیین شدت، مسئول و مهلت", task: "T18", auth: true, body: "TriageInput", success: { status: 200, data: "HelpReportDto" }, errors: [401, 403, 404, 409, 422] },
   { method: "post", path: "/help-requests/{id}/resolve", summary: "پایان رسیدگی با پاسخ ثبت‌شده", task: "T18", auth: true, body: "ResolveHelpInput", success: { status: 200, data: "HelpReportDto" }, errors: [401, 403, 404, 409, 422] },
   { method: "get", path: "/help-requests/{id}/evidence/{mediaId}", summary: "خواندن عکس خصوصی گزارش", task: "T18", auth: true, success: { status: 200, jpeg: true }, errors: [401, 403, 404, 503] },
+  { method: "get", path: "/missions", summary: "فهرست مأموریت‌ها", task: "T19", auth: true, query: MissionQuery, success: { status: 200, data: "MissionListItem", list: true }, errors: [401, 403, 422] },
+  { method: "post", path: "/missions", summary: "ایجاد مأموریت توسط مسئول گزارش", task: "T19", auth: true, body: "CreateMissionInput", success: { status: 201, data: "MissionDto" }, errors: [401, 403, 404, 409, 422] },
+  { method: "post", path: "/missions/{id}/acceptances", summary: "پذیرش اتمیک مأموریت", task: "T19", auth: true, body: "MissionAcceptanceInput", idempotent: true, success: { status: 201, data: "AcceptanceDto" }, errors: [400, 401, 403, 404, 409, 422] },
+  { method: "post", path: "/missions/{id}/updates", summary: "انصراف، ثبت نتیجه یا تأیید پایان مأموریت", task: "T19", auth: true, body: "MissionUpdateInput", success: { status: 200, data: "MissionDto" }, errors: [401, 403, 404, 409, 422] },
   { method: "get", path: "/caregivers", summary: "جست‌وجوی نگهدارنده", task: "T28", auth: false, query: CaregiverListQuery, success: { status: 200, data: "PublicCaregiverSummary", list: true }, errors: [422] },
   { method: "post", path: "/placement-requests", summary: "درخواست نگهداری", task: "T28", auth: true, body: "CreatePlacementRequest", idempotent: true, success: { status: 201 }, errors: [401, 403, 409, 422] },
   { method: "post", path: "/placement-requests/{id}/decision", summary: "پذیرش یا رد درخواست", task: "T28", auth: true, body: "PlacementDecisionRequest", idempotent: true, success: { status: 200 }, errors: [401, 403, 404, 409, 422] },
