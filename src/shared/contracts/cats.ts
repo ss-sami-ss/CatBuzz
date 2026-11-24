@@ -38,6 +38,7 @@ export const CreateCatRequest = z
     ageEstimate: z.enum(["kitten", "young", "adult", "senior", "unknown"]).default("unknown"),
     markings: z.string().trim().max(200).optional(),
     mediaIds: z.array(Uuid).max(10).default([]),
+    publishPhotos: z.boolean().optional(),
     observation: z.object({
       observedAt: IsoDateTime,
       location: PrivatePoint,
@@ -66,6 +67,7 @@ export const UpdateCatRequest = z.strictObject({
   .meta({ id: "UpdateCatRequest" });
 
 export const PublicCatDetail = PublicCatSummary.extend({
+  photoIds: z.array(Uuid),
   sex: CreateCatRequest.shape.sex.unwrap(),
   ageEstimate: CreateCatRequest.shape.ageEstimate.unwrap(),
   markings: z.string().nullable(),

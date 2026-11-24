@@ -35,7 +35,7 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | PUT /me/capabilities | فهرست توانمندی و محدوده؛ صلاحیت vet از این مسیر فعال نشود |
 | GET /map | عمومی؛ bbox حداکثر ۲ درجه در هر محور، zoom از ۳ تا ۲۰، needs با ویرگول (حداقل یک نیاز مشترک)؛ خروجی PublicMapItem با حداکثر ۵۰۰ نتیجه و no-store |
 | GET /cats | cursor و فیلتر؛ PublicCatSummary |
-| POST /cats | حساب فعال، نام اختیاری، ویژگی، mediaIds و observation |
+| POST /cats | حساب فعال؛ mediaIds آماده و متعلق به ثبت‌کننده؛ انتشار عمومی عکس در صورت انتخاب publishPhotos |
 | GET/PATCH/DELETE /cats/{id} | پروندهٔ عمومی گربهٔ خیابانی فعال؛ ویرایش یا بایگانی با version توسط ثبت‌کننده |
 | POST /cats/{id}/sightings | observedAt، location، precision؛ محدودیت زمان/مکان معتبر |
 | GET /cats/{id}/access/location | دسترسی دقیق با assignment یا grant فعال، audit و no-store |
@@ -58,6 +58,7 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | PUT /uploads/{id}/content | مالک با همان نشست فعال و token؛ بدنهٔ خام و Content-Type مطابق intent؛ ۲۰۴ |
 | POST /uploads/{id}/complete | بررسی مالک، نوع واقعی و ابعاد، پاک‌سازی metadata و تبدیل به JPEG؛ پاسخ ready پس از ذخیرهٔ موفق؛ تکرار موفق بی‌خطر |
 | GET /uploads/{id}/access | مالک عکس آماده؛ URL دانلود امضاشده با اعتبار ۵ دقیقه |
+| GET /public-images/{id} | JPEG پاک‌سازی‌شده با رضایت انتشار و اتصال به پروندهٔ خیابانی فعال؛ no-store |
 | GET /uploads/{id}/content | مالک و token دانلود؛ فقط JPEG پاک‌سازی‌شده، private/no-store |
 | GET/POST /fundraisers | هدف، currency و recipient؛ کنترل انتشار مالی |
 | POST /fundraisers/{id}/checkout | amountMinor و Idempotency-Key؛ ایجاد پرداخت pending |

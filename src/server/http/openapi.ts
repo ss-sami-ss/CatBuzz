@@ -73,6 +73,7 @@ const OPERATIONS: Operation[] = [
   { method: "post", path: "/uploads/{id}/complete", summary: "بررسی و پاک‌سازی عکس", task: "T13", auth: true, success: { status: 200, data: "ReadyImageDto" }, errors: [401, 403, 404, 409, 422, 429, 503] },
   { method: "get", path: "/uploads/{id}/access", summary: "دریافت پیوند امضاشدهٔ عکس آماده", task: "T13", auth: true, success: { status: 200, data: "SignedImageDto" }, errors: [401, 403, 404] },
   { method: "get", path: "/uploads/{id}/content", summary: "دریافت عکس خصوصی پاک‌سازی‌شده", task: "T13", auth: true, query: signedQuery, success: { status: 200, jpeg: true }, errors: [401, 403, 404, 503] },
+  { method: "get", path: "/public-images/{id}", summary: "عکس پاک‌سازی‌شدهٔ پروندهٔ عمومی", task: "T14", auth: false, success: { status: 200, jpeg: true }, errors: [404, 503] },
   { method: "get", path: "/caregivers", summary: "جست‌وجوی نگهدارنده", task: "T28", auth: false, query: CaregiverListQuery, success: { status: 200, data: "PublicCaregiverSummary", list: true }, errors: [422] },
   { method: "post", path: "/placement-requests", summary: "درخواست نگهداری", task: "T28", auth: true, body: "CreatePlacementRequest", idempotent: true, success: { status: 201 }, errors: [401, 403, 409, 422] },
   { method: "post", path: "/placement-requests/{id}/decision", summary: "پذیرش یا رد درخواست", task: "T28", auth: true, body: "PlacementDecisionRequest", idempotent: true, success: { status: 200 }, errors: [401, 403, 404, 409, 422] },

@@ -74,7 +74,11 @@ export async function listCats(db: ReadDb, query: z.output<typeof CatListQuery>,
 export async function getCat(db: ReadDb, id: string) {
   const [row] = await db.select(fields).from(cats).where(and(publicFilter, eq(cats.id, id)));
   if (!row) throw new ApiError("NOT_FOUND");
-  return { ...summary(row), sex: row.sex, ageEstimate: row.ageEstimate, markings: row.markings, version: row.version };
+  const photos = await db.select({ id: media.id }).from(catMedia).innerJoin(media, eq(media.id, catMedia.mediaId))
+    .where(and(eq(catMedia.catId, id), eq(media.status, "ready"), eq(media.visibility, "public"),
+      sql`${media.storageKey} = 'ready/images/' || ${media.id}::text || '.jpg'`))
+    .orderBy(media.createdAt, media.id);
+  return { ...summary(row), photoIds: photos.map((photo) => photo.id), sex: row.sex, ageEstimate: row.ageEstimate, markings: row.markings, version: row.version };
 }
 
 function sighting(input: z.output<typeof CreateSightingRequest>, now: Date) {
@@ -98,7 +102,10 @@ export async function createCat(db: Db, actorId: string, input: z.output<typeof 
       const files = await tx.select({ id: media.id }).from(media).where(and(
         inArray(media.id, mediaIds), eq(media.ownerId, actorId), eq(media.status, "ready"),
         sql`${media.mime} like 'image/%'`,
-      )).for("share");
+
+      )).orderBy(media.id).for("update");
+      const attached = await tx.select({ id: catMedia.mediaId }).from(catMedia).where(inArray(catMedia.mediaId, mediaIds)).limit(1);
+      if (attached.length) throw new ApiError("CONFLICT", { message: "یکی از عکس‌ها قبلاً به پرونده‌ای متصل شده است." });
       if (files.length !== mediaIds.length) throw new ApiError("VALIDATION_FAILED", { fieldErrors: { mediaIds: ["عکس باید آماده و متعلق به حساب شما باشد."] } });
     }
     const [cat] = await tx.insert(cats).values({
@@ -108,7 +115,14 @@ export async function createCat(db: Db, actorId: string, input: z.output<typeof 
     if (!cat) throw new ApiError("INTERNAL");
     await tx.insert(sightings).values({ ...first, observerId: actorId, catId: cat.id });
     if (input.name) await tx.insert(catNames).values({ catId: cat.id, name: input.name, chosenBy: actorId, validFrom: now });
-    if (mediaIds.length) await tx.insert(catMedia).values(mediaIds.map((mediaId) => ({ catId: cat.id, mediaId })));
+    if (mediaIds.length) {
+      await tx.insert(catMedia).values(mediaIds.map((mediaId) => ({ catId: cat.id, mediaId })));
+      if (input.publishPhotos) {
+        await tx.update(media).set({ visibility: "public" }).where(and(
+          inArray(media.id, mediaIds), sql`${media.storageKey} = 'ready/images/' || ${media.id}::text || '.jpg'`,
+        ));
+      }
+    }
     return getCat(tx, cat.id);
   });
 }
