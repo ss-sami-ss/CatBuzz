@@ -6,6 +6,7 @@ import { getMediaStorage } from "@/server/media/storage";
 import { createDuplicateHandlers } from "@/server/cats/duplicate-handlers";
 import { getClinic, listClinics } from "@/server/clinics/directory";
 import { createMissionHandlers } from "@/server/missions/handlers";
+import { createGroupHandlers } from "@/server/groups/handlers";
 import { createHelpHandlers } from "@/server/help/handlers";
 import { createCareHandlers } from "@/server/care/handlers";
 import { createCatHandlers } from "@/server/cats/handlers";
@@ -629,5 +630,49 @@ describe("mission acceptance (Q06–Q08)", () => {
     const events = await db.select().from(s.missionUpdates).where(eq(s.missionUpdates.missionId, mission.id));
     expect(events.map(({ event }) => event)).toEqual(expect.arrayContaining(["created", "accepted", "submit_result", "complete"]));
     expect(events).toHaveLength(4);
+  });
+});
+
+
+describe("community membership", () => {
+  it("scopes reviewers, keeps history and transfers administration without leaving an orphan group", async () => {
+    const admin = await newUser("sample_group_admin");
+    const member = await newUser("sample_group_member");
+    const outsider = await newUser("sample_group_outsider");
+    const handler = createGroupHandlers(() => db, async (request) => {
+      const id = request.headers.get("x-test-actor");
+      if (!id) throw new ApiError("UNAUTHENTICATED");
+      return { userId: id, sessionId: id, status: "active" };
+    }, () => new Date("2026-11-25T12:00:00Z"));
+    const req = (actor?: string, body?: object, method = "POST") => new Request("http://localhost/api/v1/test", {
+      method, ...(actor && { headers: { "x-test-actor": actor } }), ...(body && { body: JSON.stringify(body) }),
+    });
+    const create = (visibility: string) => handler.create(req(admin, {
+      name: "گروه آزمایشی", scope: "local", visibility, areaCellId: "g0.01:805:901",
+    }));
+    const a = await create("request");
+    expect(a.status).toBe(201);
+    const { data: group } = await a.json();
+    const hidden = (await (await create("hidden")).json()).data;
+    const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
+    const listed = await handler.list(new Request("http://localhost/api/v1/groups?scope=local&areaCellId=g0.01:805:901"));
+    expect((await listed.json()).data.map((item: { id: string }) => item.id)).toEqual([group.id]);
+    expect((await handler.join(req(outsider), ctx(hidden.id))).status).toBe(404);
+    const joins = await Promise.all([handler.join(req(member), ctx(group.id)), handler.join(req(member), ctx(group.id))]);
+    const [first, second] = await Promise.all(joins.map((res) => res.json()));
+    expect(first.data.status).toBe("requested");
+    expect(second.data.id).toBe(first.data.id);
+    const review = (actor: string, action: string) => handler.review(req(actor, { action, membershipId: first.data.id }), ctx(group.id));
+    expect((await handler.requests(req(outsider, undefined, "GET"), ctx(group.id))).status).toBe(403);
+    expect((await review(outsider, "approve")).status).toBe(403);
+    expect((await review(admin, "approve")).status).toBe(200);
+    expect((await review(admin, "promote")).status).toBe(200);
+    expect((await handler.requests(req(member, undefined, "GET"), ctx(group.id))).status).toBe(200);
+    expect((await handler.leave(req(admin, undefined, "DELETE"), ctx(group.id))).status).toBe(409);
+    expect((await review(admin, "transfer_admin")).status).toBe(200);
+    expect((await handler.leave(req(admin, undefined, "DELETE"), ctx(group.id))).status).toBe(200);
+    expect((await handler.requests(req(admin, undefined, "GET"), ctx(group.id))).status).toBe(403);
+    const rows = await db.select().from(s.groupMemberships).where(eq(s.groupMemberships.groupId, group.id));
+    expect(rows).toEqual(expect.arrayContaining([expect.objectContaining({ userId: admin, status: "left" }), expect.objectContaining({ userId: member, role: "admin", status: "active" })]));
   });
 });

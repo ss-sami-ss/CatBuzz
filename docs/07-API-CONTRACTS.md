@@ -53,8 +53,10 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET/POST /missions | فهرست برای حساب فعال؛ ایجاد فقط مسئول مجاز گزارش triage‌شده |
 | POST /missions/{id}/acceptances | نسخه، نقش، مهارت و ظرفیت؛ صلاحیت دامپزشکی برای vet_visit؛ Idempotency-Key با اعتبار ۲۴ ساعت |
 | POST /missions/{id}/updates | نسخه، انصراف یا ثبت نتیجهٔ شرکت‌کننده؛ تأیید پایان توسط ایجادکنندهٔ مجاز پس از ثبت نتایج |
-| GET/POST /groups | scope و visibility |
-| POST /groups/{id}/membership-requests | حساب فعال و قواعد گروه |
+| GET/POST /groups | گروه عمومی یا محلی با سلول تقریبی؛ گروه پنهان در فهرست عمومی نمایش نمی‌یابد |
+| GET/POST /groups/{id}/membership-requests | ثبت درخواست ورود توسط حساب فعال؛ فهرست اعضا و درخواست‌ها فقط برای مدیر و ناظر |
+| POST /groups/{id}/membership-requests/review | پذیرش، رد و حذف عضو؛ تغییر نقش و واگذاری مدیریت فقط توسط مدیر |
+| DELETE /groups/{id}/membership | خروج خود یا لغو درخواست؛ مدیر ابتدا مدیریت را واگذار می‌کند |
 | GET/POST /conversations/{id}/messages | participant فعال، cursor/clientMessageId |
 | GET /clinics | فهرست صفحه‌بندی‌شده با وضعیت تأیید؛ مختصات، نشانی و تماس فقط با رضایت صریح انتشار |
 | GET /clinics/{id} | پروفایل عمومی، ساعات کاری ساختاریافته، منطقهٔ زمانی و خدمات |
