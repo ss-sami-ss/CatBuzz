@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { AuthChallengeRequest, AuthChallengeResponse, AuthVerifyRequest } from "@/shared/contracts/auth";
+import { CareLogReceipt, CareLogRequest, ConfirmHealthRequest, HealthConfirmation, HealthReportReceipt, HealthReportRequest, PrivateCareLog, PrivateHealthRecord, PublicHealthRecord } from "@/shared/contracts/care";
 import { CaregiverListQuery, PublicCaregiverSummary } from "@/shared/contracts/caregivers";
 import { CatListQuery, CreateCatRequest, CreateSightingRequest, PublicCatDetail, PublicCatSummary, SightingReceipt, UpdateCatRequest } from "@/shared/contracts/cats";
 import { ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, PublicColony, UpdateColonyRequest } from "@/shared/contracts/colonies";
+import { PublicClinic } from "@/shared/contracts/clinics";
 import { ArchiveRequest, PageQuery } from "@/shared/contracts/common";
+import { MergeReceipt, MergeRequest, SimilarCat } from "@/shared/contracts/duplicates";
 import { ErrorEnvelope } from "@/shared/contracts/errors";
 import { MapQuery, PublicMapItem } from "@/shared/contracts/map";
 import { CreatePlacementRequest, PlacementDecisionRequest } from "@/shared/contracts/placements";
@@ -25,8 +28,8 @@ function toSchema(schema: z.ZodType, io: "input" | "output"): JsonSchema {
   return json;
 }
 
-const REQUESTS = { UploadIntentRequest, ArchiveRequest, UpdateCatRequest, CreateSightingRequest, ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, UpdateColonyRequest, CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
-const RESPONSES = { ReadyImageDto, SignedImageDto, UploadIntentDto, PublicCatDetail, PublicColony, SightingReceipt, AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
+const REQUESTS = { MergeRequest, CareLogRequest, ConfirmHealthRequest, HealthReportRequest, UploadIntentRequest, ArchiveRequest, UpdateCatRequest, CreateSightingRequest, ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, UpdateColonyRequest, CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
+const RESPONSES = { PublicClinic, MergeReceipt, SimilarCat, CareLogReceipt, HealthConfirmation, HealthReportReceipt, PrivateCareLog, PrivateHealthRecord, PublicHealthRecord, ReadyImageDto, SignedImageDto, UploadIntentDto, PublicCatDetail, PublicColony, SightingReceipt, AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
 
 type Operation = {
   method: "get" | "post" | "put" | "patch" | "delete";
@@ -74,6 +77,16 @@ const OPERATIONS: Operation[] = [
   { method: "get", path: "/uploads/{id}/access", summary: "دریافت پیوند امضاشدهٔ عکس آماده", task: "T13", auth: true, success: { status: 200, data: "SignedImageDto" }, errors: [401, 403, 404] },
   { method: "get", path: "/uploads/{id}/content", summary: "دریافت عکس خصوصی پاک‌سازی‌شده", task: "T13", auth: true, query: signedQuery, success: { status: 200, jpeg: true }, errors: [401, 403, 404, 503] },
   { method: "get", path: "/public-images/{id}", summary: "عکس پاک‌سازی‌شدهٔ پروندهٔ عمومی", task: "T14", auth: false, success: { status: 200, jpeg: true }, errors: [404, 503] },
+  { method: "get", path: "/cats/{id}/health-records", summary: "خلاصهٔ عمومی سوابق تأییدشده", task: "T15", auth: false, success: { status: 200, data: "PublicHealthRecord", list: true }, errors: [404] },
+  { method: "post", path: "/cats/{id}/health-records", summary: "ثبت گزارش یا اصلاح سابقه", task: "T15", auth: true, body: "HealthReportRequest", success: { status: 201, data: "HealthReportReceipt" }, errors: [401, 403, 404, 422] },
+  { method: "get", path: "/cats/{id}/health-records/private", summary: "سوابق پزشکی با کنترل دسترسی", task: "T15", auth: true, success: { status: 200, data: "PrivateHealthRecord", list: true }, errors: [401, 403, 404] },
+  { method: "post", path: "/health-records/{id}/confirm", summary: "تأیید و انتخاب انتشار توسط دامپزشک مرتبط", task: "T15", auth: true, body: "ConfirmHealthRequest", success: { status: 200, data: "HealthConfirmation" }, errors: [401, 403, 404, 409, 422] },
+  { method: "get", path: "/cats/{id}/care-logs", summary: "یادداشت‌های مجاز مراقبت", task: "T15", auth: true, success: { status: 200, data: "PrivateCareLog", list: true }, errors: [401, 403, 404] },
+  { method: "post", path: "/cats/{id}/care-logs", summary: "ثبت مراقبت غیرپزشکی", task: "T15", auth: true, body: "CareLogRequest", success: { status: 201, data: "CareLogReceipt" }, errors: [401, 403, 404, 422] },
+  { method: "get", path: "/cats/{id}/similar", summary: "پرونده‌های همسایه برای مقایسهٔ دستی", task: "T16", auth: false, success: { status: 200, data: "SimilarCat", list: true }, errors: [404] },
+  { method: "post", path: "/cats/{id}/merge-requests", summary: "ثبت درخواست بررسی ادغام", task: "T16", auth: true, body: "MergeRequest", success: { status: 201, data: "MergeReceipt" }, errors: [401, 403, 404, 409, 422] },
+  { method: "get", path: "/clinics", summary: "فهرست عمومی کلینیک‌ها", task: "T17", auth: false, query: PageQuery, success: { status: 200, data: "PublicClinic", list: true }, errors: [422] },
+  { method: "get", path: "/clinics/{id}", summary: "پروفایل عمومی کلینیک", task: "T17", auth: false, success: { status: 200, data: "PublicClinic" }, errors: [404] },
   { method: "get", path: "/caregivers", summary: "جست‌وجوی نگهدارنده", task: "T28", auth: false, query: CaregiverListQuery, success: { status: 200, data: "PublicCaregiverSummary", list: true }, errors: [422] },
   { method: "post", path: "/placement-requests", summary: "درخواست نگهداری", task: "T28", auth: true, body: "CreatePlacementRequest", idempotent: true, success: { status: 201 }, errors: [401, 403, 409, 422] },
   { method: "post", path: "/placement-requests/{id}/decision", summary: "پذیرش یا رد درخواست", task: "T28", auth: true, body: "PlacementDecisionRequest", idempotent: true, success: { status: 200 }, errors: [401, 403, 404, 409, 422] },

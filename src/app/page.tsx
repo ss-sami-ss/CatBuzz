@@ -7,7 +7,7 @@ export default function HomePage() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 dir="ltr">CatBuzz</h1>
-        <nav aria-label="ناوبری اصلی" className={styles.filters}><Link href="/cats">پروندهٔ گربه‌ها</Link><Link href="/cats/new">ثبت گربه</Link><Link href="/account">حساب کاربری</Link></nav>
+        <nav aria-label="ناوبری اصلی" className={styles.filters}><Link href="/cats">پروندهٔ گربه‌ها</Link><Link href="/cats/new">ثبت گربه</Link><Link href="/clinics">کلینیک‌ها</Link><Link href="/account">حساب کاربری</Link></nav>
       </header>
       <HomeExplorer />
     </main>

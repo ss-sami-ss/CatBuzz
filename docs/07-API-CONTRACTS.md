@@ -39,7 +39,8 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET/PATCH/DELETE /cats/{id} | پروندهٔ عمومی گربهٔ خیابانی فعال؛ ویرایش یا بایگانی با version توسط ثبت‌کننده |
 | POST /cats/{id}/sightings | observedAt، location، precision؛ محدودیت زمان/مکان معتبر |
 | GET /cats/{id}/access/location | دسترسی دقیق با assignment یا grant فعال، audit و no-store |
-| POST /cats/{id}/merge-requests | candidateId و reason؛ ادغام فقط ناظر مجاز |
+| GET /cats/{id}/similar | حداکثر ۲۰ پروندهٔ خیابانی فعال در سلول عمومی و سلول‌های مجاور هم‌اندازه؛ برای مقایسهٔ دستی |
+| POST /cats/{id}/merge-requests | candidateId و reason؛ ثبت در صف بررسی و audit؛ هر جفت پرونده فقط یک درخواست باز |
 | GET/POST /colonies | فهرست عمومی صفحه‌بندی‌شده و ایجاد توسط حساب فعال |
 | GET/PATCH/DELETE /colonies/{id} | خواندن تقریبی، ویرایش نسخه‌دار توسط ثبت‌کننده یا مراقب فعال، بایگانی فقط توسط ثبت‌کننده |
 | POST /colonies/{id}/memberships | catId، action، at و version؛ شروع با اختیار کلونی و ثبت‌کنندهٔ گربه، پایان با اختیار کلونی؛ تاریخچه حفظ می‌شود |
@@ -52,8 +53,12 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET/POST /groups | scope و visibility |
 | POST /groups/{id}/membership-requests | حساب فعال و قواعد گروه |
 | GET/POST /conversations/{id}/messages | participant فعال، cursor/clientMessageId |
-| GET /clinics | مختصات عمومی کلینیک و وضعیت تأیید |
-| GET/POST /cats/{id}/health-records | انتشار خلاصهٔ عمومی مجاز؛ ثبت حرفه‌ای با vet credential |
+| GET /clinics | فهرست صفحه‌بندی‌شده با وضعیت تأیید؛ مختصات، نشانی و تماس فقط با رضایت صریح انتشار |
+| GET /clinics/{id} | پروفایل عمومی، ساعات کاری ساختاریافته، منطقهٔ زمانی و خدمات |
+| GET/POST /cats/{id}/health-records | خلاصهٔ عمومی بدون جزئیات؛ ثبت گزارش خصوصی و اصلاح با amendsRecordId؛ ثبت حرفه‌ای نیازمند مدرک و مأموریت فعال دامپزشکی |
+| GET /cats/{id}/health-records/private | نویسنده، صاحب گربهٔ خانگی یا دامپزشک واجد‌شرایط و مرتبط؛ no-store |
+| POST /health-records/{id}/confirm | تأیید مستقل با مجوز دامپزشکی و ثبت audit؛ انتشار اختیاری دسته و روز برای گربهٔ خیابانی |
+| GET/POST /cats/{id}/care-logs | ثبت مراقبت غیرپزشکی و خواندن خصوصی توسط نویسنده یا صاحب گربهٔ خانگی |
 | POST /uploads/intents | نشست فعال؛ kind=image، type از JPEG/PNG/WebP، size حداکثر ۸ MiB؛ URL نسبی امضاشدهٔ قرنطینه با اعتبار ۵ دقیقه |
 | PUT /uploads/{id}/content | مالک با همان نشست فعال و token؛ بدنهٔ خام و Content-Type مطابق intent؛ ۲۰۴ |
 | POST /uploads/{id}/complete | بررسی مالک، نوع واقعی و ابعاد، پاک‌سازی metadata و تبدیل به JPEG؛ پاسخ ready پس از ذخیرهٔ موفق؛ تکرار موفق بی‌خطر |

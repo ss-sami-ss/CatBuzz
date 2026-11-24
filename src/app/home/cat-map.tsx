@@ -7,8 +7,11 @@ import type { Bounds, SampleCat } from "./discovery";
 import { homeMapStyle, providerStyle, sampleBounds, sampleCenter } from "./map-style";
 import styles from "./home.module.css";
 
-export function CatMap({ cats, selectedId, select, applyBounds }: {
-  cats: SampleCat[];
+export function CatMap({ cats, selectedId, select, applyBounds, initialBounds = sampleBounds, label = "نقشهٔ گربه‌ها", fallback = "نقشه در دسترس نیست. گربه‌ها را در فهرست ببینید." }: {
+  cats: Pick<SampleCat, "id" | "center" | "name" | "needs">[];
+  initialBounds?: [[number, number], [number, number]];
+  label?: string;
+  fallback?: string;
   selectedId: string | null;
   select: (id: string) => void;
   applyBounds: (bounds: Bounds) => void;
@@ -31,7 +34,7 @@ export function CatMap({ cats, selectedId, select, applyBounds }: {
         style: homeMapStyle,
         center: sampleCenter,
         zoom: 12,
-        bounds: sampleBounds,
+        bounds: initialBounds,
         fitBoundsOptions: { padding: 28, animate: false },
         minZoom: 10,
         maxZoom: 16,
@@ -67,7 +70,7 @@ export function CatMap({ cats, selectedId, select, applyBounds }: {
       window.clearTimeout(timeout);
       map?.remove();
     };
-  }, []);
+  }, [initialBounds]);
 
   useEffect(() => {
     if (!engine || error) return;
@@ -107,10 +110,10 @@ export function CatMap({ cats, selectedId, select, applyBounds }: {
   }
 
   return (
-    <section aria-label="نقشهٔ گربه‌ها" className={styles.mapPanel}>
+    <section aria-label={label} className={styles.mapPanel}>
       <div ref={container} className={styles.map} hidden={error} />
       {error ? (
-        <p className={styles.mapNotice} role="alert">نقشه در دسترس نیست. گربه‌ها را در فهرست ببینید.</p>
+        <p className={styles.mapNotice} role="alert">{fallback}</p>
       ) : !engine ? (
         <p className={styles.mapNotice} role="status">در حال آماده‌سازی نقشه…</p>
       ) : (

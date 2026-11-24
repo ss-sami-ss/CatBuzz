@@ -3,6 +3,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import sharp from "sharp";
 import { createUploadHandlers } from "@/server/media/upload-handlers";
 import { getMediaStorage } from "@/server/media/storage";
+import { createDuplicateHandlers } from "@/server/cats/duplicate-handlers";
+import { getClinic, listClinics } from "@/server/clinics/directory";
+import { createCareHandlers } from "@/server/care/handlers";
 import { createCatHandlers } from "@/server/cats/handlers";
 import { ApiError } from "@/server/http/api-error";
 import { decodeCursor } from "@/server/http/cursor";
@@ -412,5 +415,114 @@ describe("private image uploads (Q24)", () => {
         storage.remove("quarantine/images/" + invalid.id),
       ]);
     }
+  });
+});
+
+
+describe("care and medical records (Q15)", () => {
+  it("keeps reports private, enforces credential and assignment, and preserves amendments", async () => {
+    const volunteer = await newUser("sample_health_volunteer");
+    const vet = await newUser("sample_health_vet");
+    const now = new Date("2026-11-21T13:12:11Z");
+    const handle = createCareHandlers({
+      db: () => db, now: () => now,
+      session: async (request) => {
+        const id = request.headers.get("x-test-actor");
+        if (!id) throw new ApiError("UNAUTHENTICATED");
+        return { userId: id, sessionId: id, status: "active" };
+      },
+    });
+    const request = (actor?: string, body?: object) => new Request("http://localhost/api/v1/test", {
+      method: body ? "POST" : "GET",
+      ...(actor && { headers: { "x-test-actor": actor } }),
+      ...(body && { body: JSON.stringify(body) }),
+    });
+    const params = (id: string) => ({ params: Promise.resolve({ id }) });
+    const [cat] = await db.insert(s.cats).values({ createdBy: volunteer }).returning({ id: s.cats.id });
+    const catId = cat!.id;
+    const payload = { category: "vaccination", occurredAt: now.toISOString(), note: "private fixture note" };
+    expect((await handle.report(request(vet, { ...payload, professional: true }), params(catId))).status).toBe(403);
+    const created = await handle.report(request(volunteer, payload), params(catId));
+    expect(created.status).toBe(201);
+    const { data: first } = await created.json();
+    expect(first.source).toBe("volunteer");
+    expect((await handle.privateHealth(request(), params(catId))).status).toBe(401);
+    expect((await (await handle.privateHealth(request(vet), params(catId))).json()).data).toEqual([]);
+    expect((await (await handle.publicHealth(request(), params(catId))).json()).data).toEqual([]);
+
+    await db.insert(s.professionalCredentials).values({
+      userId: vet, profession: "veterinarian", status: "verified", verifiedBy: volunteer,
+      verifiedAt: now, expiresAt: new Date(now.getTime() + 60_000),
+    });
+    expect((await handle.confirm(request(vet, { publish: true }), params(first.id))).status).toBe(403);
+    const [help] = await db.insert(s.helpRequests).values({ catId, reporterId: volunteer, description: "درخواست نمونه", needType: "treatment" }).returning({ id: s.helpRequests.id });
+    const [mission] = await db.insert(s.missions).values({ helpRequestId: help!.id, type: "vet_visit", createdBy: volunteer, status: "full" }).returning({ id: s.missions.id });
+    const [assignment] = await db.insert(s.assignments).values({ missionId: mission!.id, userId: vet }).returning({ id: s.assignments.id });
+    expect((await handle.confirm(request(vet, { publish: true }), params(first.id))).status).toBe(200);
+    const publicResult = await handle.publicHealth(request(), params(catId));
+    expect(publicResult.headers.get("cache-control")).toBe("no-store");
+    expect((await publicResult.json()).data).toEqual([{ id: first.id, category: "vaccination", day: "2026-11-21", confirmed: true }]);
+    const amended = await handle.report(request(vet, { ...payload, note: "private amendment", professional: true, amendsRecordId: first.id }), params(catId));
+    expect(amended.status).toBe(201);
+    const { data: second } = await amended.json();
+    expect((await handle.confirm(request(vet, { publish: false }), params(second.id))).status).toBe(200);
+    expect((await (await handle.publicHealth(request(), params(catId))).json()).data).toEqual([]);
+    expect((await (await handle.privateHealth(request(vet), params(catId))).json()).data).toHaveLength(2);
+    await db.update(s.assignments).set({ status: "removed", endedAt: now }).where(eq(s.assignments.id, assignment!.id));
+    expect((await handle.report(request(vet, { ...payload, professional: true }), params(catId))).status).toBe(403);
+    expect((await (await handle.privateHealth(request(vet), params(catId))).json()).data).toHaveLength(1);
+    expect((await handle.care(request(volunteer, { category: "feeding", occurredAt: now.toISOString(), note: "private feeding note" }), params(catId))).status).toBe(201);
+    expect((await (await handle.listCare(request(vet), params(catId))).json()).data).toEqual([]);
+  });
+});
+
+
+describe("duplicate cat requests", () => {
+  it("uses only public neighboring cells and deduplicates concurrent requests", async () => {
+    const actor = await newUser("sample_duplicate_reporter");
+    const handle = createDuplicateHandlers(() => db, async () => ({ userId: actor, sessionId: actor, status: "active" }));
+    const [source, nearby, distant, owned] = await db.insert(s.cats).values([
+      { createdBy: actor, publicCellId: "g0.01:101:102", currentName: "نمونهٔ اصلی" },
+      { createdBy: actor, publicCellId: "g0.01:102:101", currentName: "نمونهٔ نزدیک" },
+      { createdBy: actor, publicCellId: "g0.01:150:160", currentName: "نمونهٔ دور" },
+      { createdBy: actor, publicCellId: "g0.01:101:101", custody: "owned", ownerUserId: actor },
+    ]).returning({ id: s.cats.id });
+    const params = (id: string) => ({ params: Promise.resolve({ id }) });
+    const path = "http://localhost/api/v1/test";
+    const response = await handle.similar(new Request(path), params(source!.id));
+    expect((await response.json()).data).toEqual([{ id: nearby!.id, name: "نمونهٔ نزدیک", areaLabel: null }]);
+    const post = (id: string, candidateId: string) => handle.request(new Request(path, { method: "POST",
+      body: JSON.stringify({ candidateId, reason: "نشانهٔ ظاهری مشابه در دادهٔ نمونه" }),
+    }), params(id));
+    expect((await post(source!.id, owned!.id)).status).toBe(404);
+    expect((await post(distant!.id, distant!.id)).status).toBe(422);
+    const results = await Promise.all([post(source!.id, nearby!.id), post(nearby!.id, source!.id)]);
+    expect(results.map(({ status }) => status).sort()).toEqual([201, 409]);
+    const saved = await db.select().from(s.moderationReports).where(eq(s.moderationReports.reporterId, actor));
+    expect(saved).toHaveLength(1);
+    const audit = await db.select().from(s.auditLogs).where(eq(s.auditLogs.resourceId, saved[0]!.id));
+    expect(audit).toEqual([expect.objectContaining({ action: "cat.merge_requested" })]);
+    expect((await db.select().from(s.cats).where(eq(s.cats.id, source!.id)))[0]!.lifecycle).toBe("active");
+  });
+});
+
+
+describe("public clinic directory", () => {
+  it("publishes coordinates and contact only with explicit consent", async () => {
+    const [hidden, publicRow] = await db.insert(s.clinics).values([
+      { name: "کلینیک نمونهٔ بدون رضایت", publicAddress: "مکان خصوصی نمونه", location: { x: 3.001, y: 2.001 }, publicPhone: "0000" },
+      { name: "کلینیک نمونهٔ عمومی", publicAddress: "نشانی نمونه", location: { x: 3.25, y: 2.25 },
+        publicPhone: "0001", contactConsent: "granted", verifiedStatus: "verified",
+        openingHours: [{ weekday: 6, opens: "08:15", closes: "13:00" }] },
+    ]).returning({ id: s.clinics.id });
+    expect(await getClinic(db, hidden!.id)).toMatchObject({ address: null, center: null, phone: null, openingHours: [], status: "unverified" });
+    expect(await getClinic(db, publicRow!.id)).toMatchObject({
+      address: "نشانی نمونه", center: [3.25, 2.25], phone: "0001", status: "verified",
+      openingHours: [{ weekday: 6, opens: "08:15", closes: "13:00" }],
+    });
+    const page = await listClinics(db, { limit: 1 }, "clinic-test-key");
+    expect(page.items).toHaveLength(1);
+    expect(page.nextCursor).toBeTruthy();
+    expect((await listClinics(db, { limit: 1, cursor: page.nextCursor! }, "clinic-test-key")).items[0]!.id).not.toBe(page.items[0]!.id);
   });
 });
