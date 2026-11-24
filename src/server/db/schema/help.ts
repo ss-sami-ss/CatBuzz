@@ -1,8 +1,9 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { check, index, integer, pgTable, primaryKey, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { createdAt, id, tstz, version } from "./_shared";
 import { cats, colonies } from "./cats";
 import { assignmentStatus, capability, helpRequestStatus, missionStatus, missionType, urgency } from "./enums";
+import { media } from "./media";
 import { users } from "./identity";
 
 export const helpRequests = pgTable(
@@ -32,6 +33,11 @@ export const helpRequests = pgTable(
     index("help_requests_open_idx").on(t.urgency, t.createdAt).where(sql`${t.status} IN ('open', 'triaged', 'in_progress')`),
   ],
 );
+
+export const helpEvidence = pgTable("help_evidence", {
+  reportId: uuid().notNull().references(() => helpRequests.id),
+  mediaId: uuid().notNull().references(() => media.id),
+}, (t) => [primaryKey({ columns: [t.reportId, t.mediaId] })]);
 
 export const missions = pgTable(
   "missions",

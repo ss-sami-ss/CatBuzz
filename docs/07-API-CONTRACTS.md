@@ -45,8 +45,11 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET/PATCH/DELETE /colonies/{id} | خواندن تقریبی، ویرایش نسخه‌دار توسط ثبت‌کننده یا مراقب فعال، بایگانی فقط توسط ثبت‌کننده |
 | POST /colonies/{id}/memberships | catId، action، at و version؛ شروع با اختیار کلونی و ثبت‌کنندهٔ گربه، پایان با اختیار کلونی؛ تاریخچه حفظ می‌شود |
 | POST /colonies/{id}/caretakers | userId، action و version؛ فقط ثبت‌کنندهٔ کلونی، با سابقهٔ ممیزی |
-| GET/POST /help-requests | نوع، فوریت، target و evidence |
-| POST /help-requests/{id}/triage | ناظر/دامپزشک مجاز، urgency و assignment؛ audit |
+| GET/POST /help-requests | فهرست خصوصی نویسنده یا صف باز بازبین؛ حساب فعال، نوع، شدت، هدف و حداکثر ۵ عکس خصوصی آماده برای ثبت |
+| POST /help-requests/{id}/triage | بازبین مجاز، نسخه، شدت، مسئول فعال و مهلت آینده؛ audit و outbox |
+| GET /help-requests/{id} | فقط نویسنده یا بازبین فعلی |
+| POST /help-requests/{id}/resolve | فقط مسئول مجاز همان گزارش، با نسخه و پاسخ غیرخالی |
+| GET /help-requests/{id}/evidence/{mediaId} | فقط نویسنده یا بازبین فعلی؛ JPEG پاک‌سازی‌شده، private/no-store |
 | GET/POST /missions | فیلتر/ایجاد طبق policy |
 | POST /missions/{id}/acceptances | version و role؛ Idempotency-Key، تراکنش ظرفیت |
 | POST /missions/{id}/updates | event، evidence و version؛ transition مجاز |

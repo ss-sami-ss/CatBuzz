@@ -1,13 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
+const externalBaseUrl = process.env.CATBUZZ_TEST_BASE_URL;
 
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
   reporter: "list",
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: externalBaseUrl ?? `http://localhost:${PORT}`,
     locale: "fa-IR",
     // Stable e2e runs use reduced motion (docs/18 §آزمون); a full-motion pass lives in its own project.
     reducedMotion: "reduce",
@@ -20,7 +21,7 @@ export default defineConfig({
       use: { ...devices["Pixel 5"], viewport: { width: 360, height: 740 }, reducedMotion: "no-preference" },
     },
   ],
-  webServer: {
+  webServer: externalBaseUrl ? undefined : {
     command: `npx next dev -p ${PORT}`,
     url: `http://localhost:${PORT}/sample`,
     reuseExistingServer: true,

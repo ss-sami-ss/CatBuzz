@@ -5,6 +5,7 @@ import { createUploadHandlers } from "@/server/media/upload-handlers";
 import { getMediaStorage } from "@/server/media/storage";
 import { createDuplicateHandlers } from "@/server/cats/duplicate-handlers";
 import { getClinic, listClinics } from "@/server/clinics/directory";
+import { createHelpHandlers } from "@/server/help/handlers";
 import { createCareHandlers } from "@/server/care/handlers";
 import { createCatHandlers } from "@/server/cats/handlers";
 import { ApiError } from "@/server/http/api-error";
@@ -524,5 +525,55 @@ describe("public clinic directory", () => {
     expect(page.items).toHaveLength(1);
     expect(page.nextCursor).toBeTruthy();
     expect((await listClinics(db, { limit: 1, cursor: page.nextCursor! }, "clinic-test-key")).items[0]!.id).not.toBe(page.items[0]!.id);
+  });
+});
+
+
+describe("urgent report triage", () => {
+  it("holds private evidence, enforces the triage owner, and requires an answer before resolution", async () => {
+    const reporter = await newUser("sample_help_reporter");
+    const reviewer = await newUser("sample_help_reviewer");
+    const other = await newUser("sample_help_other");
+    const now = new Date("2026-11-23T12:00:00Z");
+    const allowed = new Set([reviewer]);
+    const handlers = createHelpHandlers({
+      db: () => db, now: () => now, reviewer: (id) => allowed.has(id), storage: getMediaStorage, rateLimit: async () => {},
+      session: async (request) => {
+        const id = request.headers.get("x-test-actor");
+        if (!id) throw new ApiError("UNAUTHENTICATED");
+        return { userId: id, sessionId: id, status: "active" };
+      },
+    });
+    const request = (actor: string, body?: object) => new Request("http://localhost/api/v1/test", {
+      method: body ? "POST" : "GET", headers: { "x-test-actor": actor }, ...(body && { body: JSON.stringify(body) }),
+    });
+    const [cat] = await db.insert(s.cats).values({ createdBy: reporter }).returning({ id: s.cats.id });
+    const id = crypto.randomUUID();
+    await db.insert(s.media).values({ id, ownerId: reporter, storageKey: "ready/images/" + id + ".jpg",
+      mime: "image/jpeg", sizeBytes: 100, status: "ready" });
+    const input = { target: { kind: "cat", id: cat!.id }, needType: "rescue", urgency: "critical", description: "sample report", evidenceIds: [id] };
+    expect((await handlers.create(request(other, input))).status).toBe(422);
+    const created = await handlers.create(request(reporter, input));
+    expect(created.status).toBe(201);
+    const report = (await created.json()).data;
+    const ctx = { params: Promise.resolve({ id: report.id }) };
+    const triage = { version: 0, urgency: "high", ownerId: reviewer, deadlineAt: "2026-11-24T12:00:00Z" };
+    expect((await handlers.get(request(other), ctx)).status).toBe(404);
+    expect((await handlers.triage(request(reporter, triage), ctx)).status).toBe(403);
+    expect((await handlers.resolve(request(reviewer, { version: 0, response: "too early" }), ctx)).status).toBe(403);
+    expect((await handlers.triage(request(reviewer, triage), ctx)).status).toBe(200);
+    expect((await handlers.triage(request(reviewer, triage), ctx)).status).toBe(409);
+    expect((await handlers.resolve(request(reviewer, { version: 1, response: "  " }), ctx)).status).toBe(422);
+    expect((await handlers.resolve(request(reviewer, { version: 1, response: "sample outcome" }), ctx)).status).toBe(200);
+    expect((await (await handlers.get(request(reporter), ctx)).json()).data).toMatchObject({ evidenceIds: [id], status: "resolved", response: "sample outcome", version: 2 });
+    allowed.delete(reviewer);
+    expect((await handlers.get(request(reviewer), ctx)).status).toBe(404);
+    const events = await db.select().from(s.outboxEvents).where(eq(s.outboxEvents.aggregateId, report.id));
+    expect(events.map((event) => event.type)).toEqual(expect.arrayContaining(["help.reported", "help.triaged", "help.resolved"]));
+    const catHandlers = createCatHandlers({ db: () => db, secret: () => "test-only", now: () => now,
+      session: async () => ({ userId: reporter, sessionId: reporter, status: "active" }) });
+    expect((await catHandlers.create(request(reporter, { mediaIds: [id], publishPhotos: true, observation: {
+      occurredAt: now.toISOString(), observedAt: now.toISOString(), location: { lng: 4, lat: 3 }, precision: "exact",
+    } }))).status).toBe(409);
   });
 });

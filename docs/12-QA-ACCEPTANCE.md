@@ -56,3 +56,14 @@ format/lint، typecheck، تست‌های مرتبط و production build در CI
 ## قالب شواهد
 
 شناسه تسک / commit / محیط / فرمان یا سناریو / نتیجه / لینک تصویر یا لاگ پالایش‌شده / محدودیت / نام بازبین. وضعیت فعلی همهٔ Qها «اجرا نشده» است؛ این بسته تنها برنامهٔ تست است.
+
+
+### پذیرش T14 روی staging
+
+سناریوی `tests/e2e/cats.spec.ts` با `CATBUZZ_TEST_BASE_URL` به محیط آزمون مستقر متصل می‌شود و سرور محلی راه نمی‌اندازد. `CATBUZZ_TEST_MAILPIT` باید به inbox آزمایشی همان محیط اشاره کند تا سناریوی ثبت واقعی اجرا شود. از حساب و دادهٔ آزمایشی استفاده می‌شود.
+
+```powershell
+$env:CATBUZZ_TEST_BASE_URL = '<staging-origin>'
+$env:CATBUZZ_TEST_MAILPIT = '<staging-test-inbox>'
+npm run test:e2e -- cats.spec.ts
+```

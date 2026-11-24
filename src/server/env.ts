@@ -12,6 +12,9 @@ const ServerEnv = z.object({
   CREDENTIAL_REVIEWER_IDS: z.string().default("").transform((value) =>
     value.split(",").map((id) => id.trim()).filter(Boolean),
   ).pipe(z.array(z.uuid())).transform((ids) => new Set(ids.map((id) => id.toLowerCase()))),
+  TRIAGE_REVIEWER_IDS: z.string().default("").transform((value) =>
+    value.split(",").map((id) => id.trim()).filter(Boolean),
+  ).pipe(z.array(z.uuid())).transform((ids) => new Set(ids.map((id) => id.toLowerCase()))),
   EMAIL_FROM: z.string().default("CatBuzz <no-reply@catbuzz.local>"),
 });
 
