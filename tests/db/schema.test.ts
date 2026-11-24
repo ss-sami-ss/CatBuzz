@@ -1,5 +1,8 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import sharp from "sharp";
+import { createUploadHandlers } from "@/server/media/upload-handlers";
+import { getMediaStorage } from "@/server/media/storage";
 import { createCatHandlers } from "@/server/cats/handlers";
 import { ApiError } from "@/server/http/api-error";
 import { decodeCursor } from "@/server/http/cursor";
@@ -346,5 +349,68 @@ describe("cat and colony lifecycle", () => {
     expect(Object.keys(created).sort()).toEqual(["id", "name", "publicArea", "version"]);
     expect((await handle.archiveColony(request("DELETE", { version: 5 }, owner), params(colonyId))).status).toBe(204);
     expect((await handle.getColony(request(), params(colonyId))).status).toBe(404);
+  });
+});
+
+describe("private image uploads (Q24)", () => {
+  it("rejects false MIME, excess bytes and foreign accounts, and publishes sanitized bytes only", async () => {
+    const owner = await newUser("sample_upload_owner");
+    const stranger = await newUser("sample_upload_stranger");
+    let now = new Date("2026-11-20T00:00:00Z");
+    const storage = getMediaStorage();
+    const handle = createUploadHandlers({
+      db: () => db, storage: () => storage, secret: () => "upload-test-only", now: () => now,
+      rateLimit: async () => {},
+      session: async (request) => {
+        const id = request.headers.get("x-test-actor");
+        if (!id) throw new ApiError("UNAUTHENTICATED");
+        return { userId: id, sessionId: id, status: "active" };
+      },
+    });
+    const request = (method: string, path: string, actor: string, body?: BodyInit, type = "application/json") =>
+      new Request("http://localhost" + path, { method, headers: { "x-test-actor": actor, "content-type": type }, body });
+    const params = (id: string) => ({ params: Promise.resolve({ id }) });
+    const begin = (size: number) => handle.intent(request("POST", "/intents", owner, JSON.stringify({ kind: "image", type: "image/jpeg", size })));
+    expect((await begin(8 * 1024 * 1024 + 1)).status).toBe(422);
+
+    const original = await sharp({ create: { width: 24, height: 16, channels: 3, background: "orange" } })
+      .withExif({ IFD0: { Artist: "sample-private-metadata" } }).jpeg().toBuffer();
+    expect((await sharp(original).metadata()).exif).toBeDefined();
+    const { data: valid } = await (await begin(original.length)).json();
+    const { data: invalid } = await (await begin(4)).json();
+    try {
+      expect((await handle.upload(request("PUT", valid.uploadUrl, stranger, new Uint8Array(original), "image/jpeg"), params(valid.id))).status).toBe(404);
+      expect((await handle.complete(request("POST", "/complete", stranger), params(valid.id))).status).toBe(404);
+      expect((await handle.upload(request("PUT", valid.uploadUrl, owner, new Uint8Array(original.length + 1), "image/jpeg"), params(valid.id))).status).toBe(422);
+      expect((await handle.signRead(request("GET", "/access", owner), params(valid.id))).status).toBe(404);
+      expect((await handle.upload(request("PUT", invalid.uploadUrl, owner, "fake", "image/jpeg"), params(invalid.id))).status).toBe(204);
+      expect((await handle.complete(request("POST", "/complete", owner), params(invalid.id))).status).toBe(422);
+      const [rejected] = await db.select({ status: s.media.status }).from(s.media).where(eq(s.media.id, invalid.id));
+      expect(rejected?.status).toBe("rejected");
+      expect(await storage.read("quarantine/images/" + invalid.id, 4)).toBeNull();
+
+      expect((await handle.upload(request("PUT", valid.uploadUrl, owner, new Uint8Array(original), "image/jpeg"), params(valid.id))).status).toBe(204);
+      const complete = () => handle.complete(request("POST", "/complete", owner), params(valid.id));
+      const results = await Promise.all([complete(), complete()]);
+      expect(results.map(({ status }) => status)).toEqual([200, 200]);
+      expect((await results[0]!.json()).data).toMatchObject({ id: valid.id, mime: "image/jpeg", status: "ready" });
+      expect(await storage.read("quarantine/images/" + valid.id, original.length)).toBeNull();
+      expect((await handle.signRead(request("GET", "/access", stranger), params(valid.id))).status).toBe(404);
+      const { data: access } = await (await handle.signRead(request("GET", "/access", owner), params(valid.id))).json();
+      const download = await handle.read(request("GET", access.downloadUrl, owner), params(valid.id));
+      expect(download.status).toBe(200);
+      expect(download.headers.get("cache-control")).toBe("private, no-store");
+      const sanitized = Buffer.from(await download.arrayBuffer());
+      expect((await sharp(sanitized).metadata()).exif).toBeUndefined();
+      expect(sanitized.includes("sample-private-metadata")).toBe(false);
+      now = new Date(now.getTime() + 5 * 60_000);
+      expect((await handle.read(request("GET", access.downloadUrl, owner), params(valid.id))).status).toBe(403);
+    } finally {
+      await Promise.all([
+        storage.remove("ready/images/" + valid.id + ".jpg"),
+        storage.remove("quarantine/images/" + valid.id),
+        storage.remove("quarantine/images/" + invalid.id),
+      ]);
+    }
   });
 });

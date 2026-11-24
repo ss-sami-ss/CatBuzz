@@ -7,6 +7,7 @@ import { ArchiveRequest, PageQuery } from "@/shared/contracts/common";
 import { ErrorEnvelope } from "@/shared/contracts/errors";
 import { MapQuery, PublicMapItem } from "@/shared/contracts/map";
 import { CreatePlacementRequest, PlacementDecisionRequest } from "@/shared/contracts/placements";
+import { ReadyImageDto, SignedImageDto, UploadIntentDto, UploadIntentRequest } from "@/shared/contracts/uploads";
 import { CapabilitiesDto, CredentialReviewRequest, CredentialStatusDto, MeDto, PublicUserSummary, PutCapabilitiesRequest, UpdateMeRequest } from "@/shared/contracts/users";
 
 /**
@@ -24,8 +25,8 @@ function toSchema(schema: z.ZodType, io: "input" | "output"): JsonSchema {
   return json;
 }
 
-const REQUESTS = { ArchiveRequest, UpdateCatRequest, CreateSightingRequest, ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, UpdateColonyRequest, CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
-const RESPONSES = { PublicCatDetail, PublicColony, SightingReceipt, AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
+const REQUESTS = { UploadIntentRequest, ArchiveRequest, UpdateCatRequest, CreateSightingRequest, ChangeCaretakerRequest, ChangeMembershipRequest, CreateColonyRequest, UpdateColonyRequest, CredentialReviewRequest, AuthChallengeRequest, AuthVerifyRequest, UpdateMeRequest, PutCapabilitiesRequest, CreateCatRequest, CreatePlacementRequest, PlacementDecisionRequest };
+const RESPONSES = { ReadyImageDto, SignedImageDto, UploadIntentDto, PublicCatDetail, PublicColony, SightingReceipt, AuthChallengeResponse, MeDto, CapabilitiesDto, CredentialStatusDto, PublicUserSummary, PublicCatSummary, PublicMapItem, PublicCaregiverSummary, ErrorEnvelope };
 
 type Operation = {
   method: "get" | "post" | "put" | "patch" | "delete";
@@ -36,9 +37,12 @@ type Operation = {
   query?: z.ZodObject;
   body?: keyof typeof REQUESTS;
   idempotent?: boolean;
-  success: { status: 200 | 201 | 204; data?: keyof typeof RESPONSES; list?: boolean };
+  imageBody?: boolean;
+  success: { status: 200 | 201 | 204; data?: keyof typeof RESPONSES; list?: boolean; jpeg?: boolean };
   errors: number[];
 };
+
+const signedQuery = z.object({ token: z.string().min(1).max(512) });
 
 const OPERATIONS: Operation[] = [
   { method: "post", path: "/auth/challenges", summary: "ارسال کد فعال‌سازی", task: "T07", auth: false, body: "AuthChallengeRequest", success: { status: 201, data: "AuthChallengeResponse" }, errors: [422, 429] },
@@ -64,6 +68,11 @@ const OPERATIONS: Operation[] = [
   { method: "delete", path: "/colonies/{id}", summary: "بایگانی کلونی", task: "T12", auth: true, body: "ArchiveRequest", success: { status: 204 }, errors: [401, 403, 404, 409, 422] },
   { method: "post", path: "/colonies/{id}/memberships", summary: "ثبت شروع یا پایان عضویت گربه", task: "T12", auth: true, body: "ChangeMembershipRequest", success: { status: 200, data: "PublicColony" }, errors: [401, 403, 404, 409, 422] },
   { method: "post", path: "/colonies/{id}/caretakers", summary: "تعیین یا لغو مراقب کلونی", task: "T12", auth: true, body: "ChangeCaretakerRequest", success: { status: 200, data: "PublicColony" }, errors: [401, 403, 404, 409, 422] },
+  { method: "post", path: "/uploads/intents", summary: "ایجاد مجوز آپلود عکس خصوصی", task: "T13", auth: true, body: "UploadIntentRequest", success: { status: 201, data: "UploadIntentDto" }, errors: [401, 403, 422, 429, 503] },
+  { method: "put", path: "/uploads/{id}/content", summary: "بارگذاری بایت عکس در قرنطینه", task: "T13", auth: true, query: signedQuery, imageBody: true, success: { status: 204 }, errors: [401, 403, 404, 409, 422, 429, 503] },
+  { method: "post", path: "/uploads/{id}/complete", summary: "بررسی و پاک‌سازی عکس", task: "T13", auth: true, success: { status: 200, data: "ReadyImageDto" }, errors: [401, 403, 404, 409, 422, 429, 503] },
+  { method: "get", path: "/uploads/{id}/access", summary: "دریافت پیوند امضاشدهٔ عکس آماده", task: "T13", auth: true, success: { status: 200, data: "SignedImageDto" }, errors: [401, 403, 404] },
+  { method: "get", path: "/uploads/{id}/content", summary: "دریافت عکس خصوصی پاک‌سازی‌شده", task: "T13", auth: true, query: signedQuery, success: { status: 200, jpeg: true }, errors: [401, 403, 404, 503] },
   { method: "get", path: "/caregivers", summary: "جست‌وجوی نگهدارنده", task: "T28", auth: false, query: CaregiverListQuery, success: { status: 200, data: "PublicCaregiverSummary", list: true }, errors: [422] },
   { method: "post", path: "/placement-requests", summary: "درخواست نگهداری", task: "T28", auth: true, body: "CreatePlacementRequest", idempotent: true, success: { status: 201 }, errors: [401, 403, 409, 422] },
   { method: "post", path: "/placement-requests/{id}/decision", summary: "پذیرش یا رد درخواست", task: "T28", auth: true, body: "PlacementDecisionRequest", idempotent: true, success: { status: 200 }, errors: [401, 403, 404, 409, 422] },
@@ -93,13 +102,18 @@ function buildOperation(op: Operation) {
     ...(op.auth ? { security: [{ session: [] }] } : { security: [] }),
     ...(parameters.length ? { parameters } : {}),
     ...(op.body ? { requestBody: { required: true, content: { "application/json": { schema: ref(op.body) } } } } : {}),
+    ...(op.imageBody ? { requestBody: { required: true, content: Object.fromEntries(
+      ["image/jpeg", "image/png", "image/webp"].map((type) => [type, { schema: { type: "string", format: "binary" } }]),
+    ) } } : {}),
     responses: {
       [op.success.status]:
         op.success.status === 204
           ? { description: "موفق، بدون بدنه" }
           : {
               description: "موفق",
-              content: { "application/json": { schema: { type: "object", required: ["data", "meta"], properties: { data: dataSchema, meta } } } },
+              content: op.success.jpeg
+                ? { "image/jpeg": { schema: { type: "string", format: "binary" } } }
+                : { "application/json": { schema: { type: "object", required: ["data", "meta"], properties: { data: dataSchema, meta } } } },
             },
       ...Object.fromEntries(
         op.errors.map((status) => [status, { description: "خطا", content: { "application/json": { schema: ref("ErrorEnvelope") } } }]),

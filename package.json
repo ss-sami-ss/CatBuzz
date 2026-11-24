@@ -23,6 +23,7 @@
     "test:db": "vitest run --config vitest.db.config.mts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1176.0",
     "@base-ui/react": "1.9.0",
     "@fontsource-variable/vazirmatn": "5.3.0",
     "drizzle-orm": "0.45.4",
@@ -33,6 +34,7 @@
     "postgres": "3.4.9",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "sharp": "0.35.5",
     "sonner": "2.0.8",
     "zod": "4.6.7"
   },

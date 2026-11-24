@@ -54,8 +54,11 @@ cursor پایدار، limit پیش‌فرض 20 و سقف 100؛ ترتیب دار
 | GET/POST /conversations/{id}/messages | participant فعال، cursor/clientMessageId |
 | GET /clinics | مختصات عمومی کلینیک و وضعیت تأیید |
 | GET/POST /cats/{id}/health-records | انتشار خلاصهٔ عمومی مجاز؛ ثبت حرفه‌ای با vet credential |
-| POST /uploads/intents | kind، type، size و target؛ خروجی signed URL قرنطینه |
-| POST /uploads/{id}/complete | تأیید مالک و object؛ پردازش asynchronous |
+| POST /uploads/intents | نشست فعال؛ kind=image، type از JPEG/PNG/WebP، size حداکثر ۸ MiB؛ URL نسبی امضاشدهٔ قرنطینه با اعتبار ۵ دقیقه |
+| PUT /uploads/{id}/content | مالک با همان نشست فعال و token؛ بدنهٔ خام و Content-Type مطابق intent؛ ۲۰۴ |
+| POST /uploads/{id}/complete | بررسی مالک، نوع واقعی و ابعاد، پاک‌سازی metadata و تبدیل به JPEG؛ پاسخ ready پس از ذخیرهٔ موفق؛ تکرار موفق بی‌خطر |
+| GET /uploads/{id}/access | مالک عکس آماده؛ URL دانلود امضاشده با اعتبار ۵ دقیقه |
+| GET /uploads/{id}/content | مالک و token دانلود؛ فقط JPEG پاک‌سازی‌شده، private/no-store |
 | GET/POST /fundraisers | هدف، currency و recipient؛ کنترل انتشار مالی |
 | POST /fundraisers/{id}/checkout | amountMinor و Idempotency-Key؛ ایجاد پرداخت pending |
 | POST /payments/webhooks/{provider} | raw body، امضا و event id؛ session کاربر لازم نیست |
