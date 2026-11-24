@@ -16,7 +16,7 @@ function CatList({ cats, selectedId, select }: {
   select: (id: string) => void;
 }) {
   return (
-    <section aria-labelledby="cat-results">
+    <section className={styles.listPanel} aria-labelledby="cat-results">
       <div className={styles.listHeader}>
         <h3 id="cat-results">گربه‌های نمونه</h3>
         <span role="status">{cats.length.toLocaleString("fa-IR")} نتیجه</span>
@@ -27,7 +27,7 @@ function CatList({ cats, selectedId, select }: {
             <li key={cat.id}>
               <button className={styles.card} aria-pressed={cat.id === selectedId} type="button" onClick={() => select(cat.id)}>
                 <span className={styles.cardTop}>
-                  <strong>{cat.name ?? "بی‌نام"}</strong>
+                  <strong><span className={styles.avatar} aria-hidden="true">✿</span>{cat.name ?? "بی‌نام"}</strong>
                   <span>{cat.area}</span>
                 </span>
                 <span className={styles.needs}>
@@ -52,7 +52,7 @@ export function HomeExplorer() {
 
   return (
     <>
-      <div className={styles.intro}>
+      <div className={styles.intro} id="discover">
         <h2>گربه‌های محله</h2>
         <p>این صفحه با داده و موقعیت‌های آزمایشی نمایش داده می‌شود.</p>
       </div>
